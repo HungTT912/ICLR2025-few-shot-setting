@@ -60,6 +60,9 @@ testing:
   num_candidates: 128
   percentile_sampling: 0.2
   type_sampling: highest
+  eta: 0 
+  classifier_free_guidance_weight : -1 
+  alpha : 0.95 
 training:
   accumulate_grad_batches: 2
   batch_size: 64
