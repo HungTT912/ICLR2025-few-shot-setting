@@ -150,7 +150,6 @@ def main():
                 mean_score_50th = np_result_50th.mean() 
                 std_score_50th = np_result_50th.std()
                 print(nconfig.task.name)
-                print(model_load_path_list[0])
                 print(mean_score_100th, std_score_100th)
                 print(mean_score_80th, std_score_80th)
                 print(mean_score_50th, std_score_50th)
