@@ -48,7 +48,7 @@ class BaseRunner(ABC):
         #                                                         with_time=True)
         if self.config.args.train:
             self.config.result.ckpt_path = make_save_dirs(self.config.args,
-                                                    prefix=self.config.tune+'/'+ self.config.task.name + f'/num_fit_samples{self.config.GP.num_fit_samples}/sampling_lr{self.config.GP.sampling_from_GP_lr}/initial_lengthscale{self.config.GP.initial_lengthscale}/delta{self.config.GP.delta_lengthscale}/seed{self.config.args.seed}',
+                                                    prefix=self.config.tune+'/'+ self.config.task.name + f'/sampling_lr{self.config.GP.sampling_from_GP_lr}/initial_lengthscale{self.config.GP.initial_lengthscale}/delta{self.config.GP.delta_lengthscale}/seed{self.config.args.seed}',
                                                     suffix=self.config.model.model_name,
                                                     with_time=False)
             # self.config.result.ckpt_path = make_save_dirs(self.config.args,
@@ -81,16 +81,16 @@ class BaseRunner(ABC):
         
         # get offline data from design-bench
         
-        if self.config.args.train == True: 
-            self.offline_x, self.mean_offline_x, self.std_offline_x, self.offline_y, self.mean_offline_y, self.std_offline_y = self.get_offline_data()
-            
-            if self.config.task.normalize_x:
-                self.offline_x = (self.offline_x - self.mean_offline_x) / self.std_offline_x
-            if self.config.task.normalize_y:
-                self.offline_y = (self.offline_y - self.mean_offline_y) / self.std_offline_y
+        # if self.config.args.train == True: 
+        self.offline_x, self.mean_offline_x, self.std_offline_x, self.offline_y, self.mean_offline_y, self.std_offline_y = self.get_offline_data()
         
-            self.offline_x = self.offline_x.to(self.config.training.device[0])
-            self.offline_y = self.offline_y.to(self.config.training.device[0])
+        if self.config.task.normalize_x:
+            self.offline_x = (self.offline_x - self.mean_offline_x) / self.std_offline_x
+        if self.config.task.normalize_y:
+            self.offline_y = (self.offline_y - self.mean_offline_y) / self.std_offline_y
+    
+        self.offline_x = self.offline_x.to(self.config.training.device[0])
+        self.offline_y = self.offline_y.to(self.config.training.device[0])
 
     def get_offline_data(self):
         if self.config.task.name != 'TFBind10-Exact-v0':
@@ -116,6 +116,9 @@ class BaseRunner(ABC):
         offline_x = offline_x[shuffle_idx]
         offline_y = offline_y[shuffle_idx]
         offline_y = offline_y.reshape(-1)
+        # unlabel 99% of the offline data 
+        self.num_samples =  int(self.config.data_ratio*offline_y.shape[0])
+        offline_y[self.num_samples+1:]  = -1
         
         return torch.from_numpy(offline_x), torch.from_numpy(mean_x), torch.from_numpy(std_x), torch.from_numpy(offline_y), torch.from_numpy(mean_y), torch.from_numpy(std_y)
 
@@ -352,8 +355,6 @@ class BaseRunner(ABC):
             mean_prior = torch.tensor(0.0, device = self.config.training.device[0]) 
             
             #GP_Model.set_hyper(lengthscale=lengthscale,variance=variance)
-            best_indices = torch.argsort(self.offline_y)[-1024:]
-            self.best_x = self.offline_x[best_indices]
             
             # if self.config.GP.type_of_initial_points == 'highest':
             #     best_indices = torch.argsort(self.offline_y)[-1024:]
@@ -371,28 +372,18 @@ class BaseRunner(ABC):
             for epoch in range(start_epoch, self.config.training.n_epochs):
                 ### generate data from GP and create dataloader
                 start_time = time.time()
-                if self.config.task.name == 'TFBind8-Exact-v0': 
-                    selected_fit_samples = torch.randperm(self.offline_x.shape[0])[:self.config.GP.num_fit_samples]
-                    GP_Model = GP(device=self.config.training.device[0],
-                                x_train=self.offline_x[selected_fit_samples],
-                                y_train=self.offline_y[selected_fit_samples], 
+                GP_Model = GP(device=self.config.training.device[0],
+                                x_train=self.offline_x[:self.num_samples],
+                                y_train=self.offline_y[:self.num_samples], 
                                 lengthscale=lengthscale, 
                                 variance=variance, 
                                 noise=noise, 
                                 mean_prior=mean_prior)
-                else: 
-                    GP_Model = GP(device=self.config.training.device[0],
-                                x_train=self.offline_x,
-                                y_train=self.offline_y, 
-                                lengthscale=lengthscale, 
-                                variance=variance, 
-                                noise=noise, 
-                                mean_prior=mean_prior)
-                # if self.config.training.no_GP == True : 
-                #     data_from_GP = sampling_from_offline_data
-                data_from_GP = sampling_data_from_GP(x_train=self.best_x,
+                data_from_GP = sampling_data_from_GP(x_train=self.offline_x,
+                                                    y_train=self.offline_y,
+                                                    num_samples = self.num_samples,
                                                     device=self.config.training.device[0],
-                                                    GP_Model=GP_Model,
+                                                    base_GP_Model= GP_Model, 
                                                     num_functions=self.config.GP.num_functions,
                                                     num_gradient_steps=self.config.GP.num_gradient_steps,
                                                     num_points=self.config.GP.num_points,

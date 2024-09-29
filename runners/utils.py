@@ -9,6 +9,7 @@ import design_bench
 # from design_bench.datasets.continuous.dkitty_morphology_dataset import DKittyMorphologyDataset
 # from design_bench.datasets.discrete.tf_bind_10_dataset import TFBind10Dataset
 # from design_bench.datasets.discrete.tf_bind_8_dataset import TFBind8Dataset
+from gaussian_process.GP import GP 
 
 # NAME_TO_ORACLE_DATASET = {
 #     'AntMorphology-Exact-v0': AntMorphologyDataset,
@@ -149,9 +150,9 @@ def sampling_data_from_trajectories(x_train, y_train, num_points = 1024, thresho
     return datasets 
 
 ### Sampling data from GP model
-def sampling_data_from_GP(x_train, device, GP_Model, num_gradient_steps = 50, num_functions = 5, num_points = 10, learning_rate = 0.001, delta_lengthscale = 0.1, delta_variance = 0.1, seed = 0, threshold_diff = 0.1):
-    lengthscale = GP_Model.kernel.lengthscale
-    variance = GP_Model.variance 
+def sampling_data_from_GP(x_train, y_train, num_samples, device, base_GP_Model, num_gradient_steps = 50, num_functions = 5, num_points = 10, learning_rate = 0.001, delta_lengthscale = 0.1, delta_variance = 0.1, seed = 0, threshold_diff = 0.1):
+    lengthscale = base_GP_Model.kernel.lengthscale
+    variance = base_GP_Model.variance 
     torch.manual_seed(seed=seed)
     datasets={}
     learning_rate_vec = torch.cat((-learning_rate*torch.ones(num_points, x_train.shape[1], device=device), learning_rate*torch.ones(num_points, x_train.shape[1], device = device)))
@@ -167,12 +168,23 @@ def sampling_data_from_GP(x_train, device, GP_Model, num_gradient_steps = 50, nu
         new_variance = variance + delta_variance*(torch.rand(1, device=device)*2 -1)
         # import pdb ; pdb.set_trace()
         # change lengthscale and variance of GP
-        GP_Model.set_hyper(lengthscale=new_lengthscale,variance = new_variance)
+        base_GP_Model.set_hyper(lengthscale=new_lengthscale,variance = new_variance)
         
         # select random num_points points from offline data
-        # y_pred = GP_Model.mean_posterior(x_train)
+        y_pred = base_GP_Model.mean_posterior(x_train[num_samples+1:])
+        y_train[num_samples+1:] = y_pred 
+        
+        GP_Model = GP(device=device,
+                    x_train=x_train,
+                    y_train=y_train,
+                    lengthscale=base_GP_Model.kernel.lengthscale, 
+                    variance=base_GP_Model.variance, 
+                    noise=base_GP_Model.noise, 
+                    mean_prior=base_GP_Model.mean_prior)
+        GP_Model.set_hyper(lengthscale=base_GP_Model.kernel.lengthscale, variance=base_GP_Model.variance)
+        
 
-        selected_indices = torch.randperm(x_train.shape[0])[:num_points]
+        selected_indices = torch.argsort(y_train)[-num_points:]
         # low_y = y_pred[selected_indices].clone().detach().requires_grad_(True)
         low_x = x_train[selected_indices].clone().detach().requires_grad_(True)
         high_x = x_train[selected_indices].clone().detach().requires_grad_(True)
@@ -204,8 +216,8 @@ def sampling_data_from_GP(x_train, device, GP_Model, num_gradient_steps = 50, nu
             datasets[f'f{iter}'].append(sample)
 
     # restore lengthscale and variance of GP
-    GP_Model.kernel.lengthscale = lengthscale
-    GP_Model.variance = variance
+    base_GP_Model.kernel.lengthscale = lengthscale
+    base_GP_Model.variance = variance
     
     return datasets
 

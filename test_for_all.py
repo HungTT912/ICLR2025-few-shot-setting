@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd 
 import csv
 import wandb 
+import design_bench
 # wandb.login(key="1cfab558732ccb32d573a7276a337d22b7d8b371")
 
 from utils import dict2namespace, get_runner, namespace2dict
@@ -78,16 +79,23 @@ def trainer(config):
     set_random_seed(config.args.seed)
     runner = get_runner(config.runner, config)
     return runner.train()
-def tester(config):
+def tester(config,task):
     set_random_seed(config.args.seed)
     runner = get_runner(config.runner, config)
-    return runner.test() 
+    return runner.test(task) 
 
 def main():
     nconfig, dconfig = parse_args_and_config()
     # wandb.init(project='BBDM',
     #         name=nconfig.wandb_name,
     #         config = dconfig) 
+    if nconfig.task.name != 'TFBind10-Exact-v0':
+        task = design_bench.make(nconfig.task.name)
+    else:
+        task = design_bench.make(nconfig.task.name,
+                                dataset_kwargs={"max_samples": 10000})
+    if task.is_discrete: 
+        task.map_to_logits()
     args = nconfig.args
     gpu_ids = args.gpu_ids
     if gpu_ids == "-1": # Use CPU
@@ -95,14 +103,17 @@ def main():
     else:
         nconfig.training.device = [torch.device(f"cuda:{gpu_ids}")]
     seed_list = range(7,8)
-    model_load_path_list = [] 
-    optim_sche_load_path_list = []
+
     for seed in seed_list:
-        nconfig.args.train = True 
+        nconfig.args.train = False 
         nconfig.args.seed = seed 
-        model_load_path, optim_sche_load_path = trainer(nconfig)
-        model_load_path_list.append(model_load_path) 
-        optim_sche_load_path_list.append(optim_sche_load_path)
+        nconfig.testing.alpha = 0.9 
+        nconfig.testing.eta = 0.05
+        nconfig.testing.classifier_free_guidance_weight = -1.5
+        nconfig.model.model_load_path = './results/few_shot/AntMorphology-Exact-v0/sampling_lr0.001/initial_lengthscale1.0/delta0.25/seed7/BrownianBridge/checkpoint/top_model_epoch_100.pth'
+        nconfig.model.optim_sche_load_path = './results/few_shot/AntMorphology-Exact-v0/sampling_lr0.001/initial_lengthscale1.0/delta0.25/seed7/BrownianBridge/checkpoint/top_optim_sche_epoch_100.pth'
+        result = tester(nconfig,task) 
+        print(result) 
     nconfig.args.train = False 
     # wandb.finish() 
     
