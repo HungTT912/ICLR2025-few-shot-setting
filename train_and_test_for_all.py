@@ -86,7 +86,7 @@ def tester(config,task):
 
 def main():
     nconfig, dconfig = parse_args_and_config()
-    wandb.init(project='BBDM',
+    wandb.init(project='BBDM-fewshot-setting',
             name=nconfig.wandb_name,
             config = dconfig) 
     args = nconfig.args
