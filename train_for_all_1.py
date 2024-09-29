@@ -94,7 +94,7 @@ def main():
         nconfig.training.device = [torch.device("cpu")]
     else:
         nconfig.training.device = [torch.device(f"cuda:{gpu_ids}")]
-    seed_list = range(7,8)
+    seed_list = range(8)
     model_load_path_list = [] 
     optim_sche_load_path_list = []
     for seed in seed_list:
