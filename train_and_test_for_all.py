@@ -97,14 +97,14 @@ def main():
         nconfig.training.device = [torch.device(f"cuda:{gpu_ids}")]
     
     seed_list = range(8)
-    model_load_path_list = [] 
-    optim_sche_load_path_list = []
-    for seed in seed_list:
-        nconfig.args.train = True 
-        nconfig.args.seed = seed 
-        model_load_path, optim_sche_load_path = trainer(nconfig)
-        model_load_path_list.append(model_load_path) 
-        optim_sche_load_path_list.append(optim_sche_load_path)
+    # model_load_path_list = [] 
+    # optim_sche_load_path_list = []
+    # for seed in seed_list:
+    #     nconfig.args.train = True 
+    #     nconfig.args.seed = seed 
+    #     model_load_path, optim_sche_load_path = trainer(nconfig)
+    #     model_load_path_list.append(model_load_path) 
+    #     optim_sche_load_path_list.append(optim_sche_load_path)
     
     if nconfig.task.name != 'TFBind10-Exact-v0':
         task = design_bench.make(nconfig.task.name)
@@ -132,8 +132,8 @@ def main():
                     nconfig.testing.alpha = alpha 
                     nconfig.args.train=False 
                     nconfig.args.seed = seed
-                    nconfig.model.model_load_path = model_load_path_list[seed]
-                    nconfig.model.optim_sche_load_path = optim_sche_load_path_list[seed]
+                    nconfig.model.model_load_path = f'./results/few_shot/AntMorphology-Exact-v0/sampling_lr0.001/initial_lengthscale1.0/delta0.25/seed{seed}/BrownianBridge/checkpoint/top_model_epoch_100.pth'
+                    nconfig.model.optim_sche_load_path = f'ICLR25-few-shot-setting/results/few_shot/AntMorphology-Exact-v0/sampling_lr0.001/initial_lengthscale1.0/delta0.25/seed{seed}/BrownianBridge/checkpoint/top_optim_sche_epoch_100.pth'
                     result = tester(nconfig,task)
                     print("Score : ",result[0]) 
                     results_100th.append(result[0])
