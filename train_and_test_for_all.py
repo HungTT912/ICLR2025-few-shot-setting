@@ -113,34 +113,54 @@ def main():
                                 dataset_kwargs={"max_samples": 10000})
     if task.is_discrete: 
         task.map_to_logits()
-    results_100th = []
-    results_80th = [] 
-    results_50th = []
-    for seed in seed_list: 
-        nconfig.args.train=False 
-        nconfig.args.seed = seed
-        nconfig.model.model_load_path = model_load_path_list[seed]
-        nconfig.model.optim_sche_load_path = optim_sche_load_path_list[seed]
-        result = tester(nconfig,task)
-        print("Score : ",result[0]) 
-        results_100th.append(result[0])
-        results_80th.append(result[1]) 
-        results_50th.append(result[2])
-    assert len(results_100th)==8 
-    np_result_100th = np.array(results_100th)
-    mean_score_100th = np_result_100th.mean() 
-    std_score_100th = np_result_100th.std()
-    np_result_80th = np.array(results_80th)
-    mean_score_80th = np_result_80th.mean() 
-    std_score_80th = np_result_80th.std()
-    np_result_50th = np.array(results_50th)
-    mean_score_50th = np_result_50th.mean() 
-    std_score_50th = np_result_50th.std()
-    print(nconfig.task.name)
-    print(model_load_path_list[0])
-    print(mean_score_100th, std_score_100th)
-    print(mean_score_80th, std_score_80th)
-    print(mean_score_50th, std_score_50th)
+    for eta in [0.0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.5]: 
+        for w in [-1.5, -2.0, -2.5, -3.0 , -4.0]:  
+            for alpha in [0.8, 0.9, 0.95, 1.0]: 
+                results_100th = []
+                results_80th = [] 
+                results_50th = []
+                file_path = f'./few-shot-results/tuning_result_ant.csv'
+
+                if not os.path.isfile(file_path):
+                    with open(file_path, 'a') as file:
+                        header = ['eta','alpha','classifier_free_guidance_weight', 'mean (100th)', 'std (100th)', 'mean (80th)', 'std (80th)', 'mean (50th)', 'std (50th)']
+                        writer = csv.writer(file)
+                        writer.writerow(header)
+                for seed in seed_list: 
+                    nconfig.testing.eta = eta 
+                    nconfig.testing.classifier_free_guidance_weight = w 
+                    nconfig.testing.alpha = alpha 
+                    nconfig.args.train=False 
+                    nconfig.args.seed = seed
+                    nconfig.model.model_load_path = model_load_path_list[seed]
+                    nconfig.model.optim_sche_load_path = optim_sche_load_path_list[seed]
+                    result = tester(nconfig,task)
+                    print("Score : ",result[0]) 
+                    results_100th.append(result[0])
+                    results_80th.append(result[1]) 
+                    results_50th.append(result[2])
+                assert len(results_100th)==8 
+                np_result_100th = np.array(results_100th)
+                mean_score_100th = np_result_100th.mean() 
+                std_score_100th = np_result_100th.std()
+                np_result_80th = np.array(results_80th)
+                mean_score_80th = np_result_80th.mean() 
+                std_score_80th = np_result_80th.std()
+                np_result_50th = np.array(results_50th)
+                mean_score_50th = np_result_50th.mean() 
+                std_score_50th = np_result_50th.std()
+                print(nconfig.task.name)
+                print(model_load_path_list[0])
+                print(mean_score_100th, std_score_100th)
+                print(mean_score_80th, std_score_80th)
+                print(mean_score_50th, std_score_50th)
+                with open(file_path, 'a') as file:
+                    new_row = [eta, alpha, w, mean_score_100th, std_score_100th, mean_score_80th, std_score_80th, mean_score_50th, std_score_50th]
+                    writer = csv.writer(file)
+                    writer.writerow(new_row)
+                    df = pd.read_csv(file_path)
+                    table = wandb.Table(dataframe=df)
+                    wandb.log({"data_table": table})
     
     nconfig.args.train = False 
     wandb.finish() 
