@@ -113,19 +113,23 @@ def main():
                                 dataset_kwargs={"max_samples": 10000})
     if task.is_discrete: 
         task.map_to_logits()
+    file_path = f'./few-shot-results/tuning_result_ant_2.csv'
+
+    if not os.path.isfile(file_path):
+        with open(file_path, 'a') as file:
+            header = ['eta','alpha','classifier_free_guidance_weight', 'mean (100th)', 'std (100th)', 'mean (80th)', 'std (80th)', 'mean (50th)', 'std (50th)']
+            writer = csv.writer(file)
+            writer.writerow(header)
+    df = pd.read_csv(file_path) 
+    tested_params = df[['eta','alpha','classifier_free_guidance_weight']].to_numpy()
     for eta in [0.0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.5]: 
-        for w in [-1.5, -2.0, -2.5, -3.0 , -4.0]:  
+        for w in [-1.5, -1, -0.5, 0, 0.5, 1, 1.5, 2 , 2.5 , 3, 4]:  
             for alpha in [0.8, 0.9, 0.95, 1.0]: 
                 results_100th = []
                 results_80th = [] 
                 results_50th = []
-                file_path = f'./few-shot-results/tuning_result_ant_2.csv'
-
-                if not os.path.isfile(file_path):
-                    with open(file_path, 'a') as file:
-                        header = ['eta','alpha','classifier_free_guidance_weight', 'mean (100th)', 'std (100th)', 'mean (80th)', 'std (80th)', 'mean (50th)', 'std (50th)']
-                        writer = csv.writer(file)
-                        writer.writerow(header)
+                if [eta, alpha, w] in tested_params: 
+                    continue 
                 for seed in seed_list: 
                     nconfig.model.BB.params.eta = eta 
                     nconfig.testing.classifier_free_guidance_weight = w 
