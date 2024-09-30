@@ -9,7 +9,13 @@ from gpytorch.kernels import(
 kernel_dict = {'rbf': RBFKernel,'matern': MaternKernel, 
                 'rq' : RQKernel, 'period': PeriodicKernel, 'cosine': CosineKernel,
                 'poly': PolynomialKernel}
-
+class GP_hyper: 
+    def __init__(self, device, lengthscale, variance,noise, mean_prior): 
+        self.device = device 
+        self.lengthscale = lengthscale 
+        self.variance = variance 
+        self.noise = noise 
+        self.mean_prior = mean_prior 
 class GP: 
     def __init__(self,device, x_train, y_train, lengthscale, variance, noise, mean_prior, kernel='rbf'):
         
@@ -31,14 +37,18 @@ class GP:
         # torch.cuda.empty_cache()
         with torch.no_grad():
             # import pdb; pdb.set_trace()
-            K_train_train = self.variance*self.kernel.forward(self.x_train, self.x_train)
-            K_train_train.diagonal().add_(self.noise)  # In-place modification
-            L = torch.linalg.cholesky(K_train_train)
+            self.K_train_train = self.variance*self.kernel.forward(self.x_train, self.x_train)
+            self.K_train_train.diagonal().add_(self.noise)  # In-place modification
+            L = torch.linalg.cholesky(self.K_train_train)
             b = (self.y_train - self.mean_prior).unsqueeze(-1)
             self.coef = torch.cholesky_solve(b, L).squeeze(-1).detach()
             #del K_train_train, L, b 
             # torch.cuda.empty_cache()
 
+    def sampling_pseudo_label(self): 
+        normal_dist = torch.distributions.Normal(0.0,1.0)
+        epsilon = normal_dist.sample((self.x_train.shape[0],)).to(self.device)
+        return torch.matmul(self.K_train_train,epsilon)
     
     def mean_posterior(self, x_test): 
         # Posterior mean

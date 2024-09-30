@@ -19,7 +19,7 @@ import numpy as np
 
 import gpytorch 
 from gaussian_process.GPlib import ExactGPModel
-from gaussian_process.GP import GP
+from gaussian_process.GP import GP, GP_hyper
 import design_bench
 
 class BaseRunner(ABC):
@@ -118,7 +118,7 @@ class BaseRunner(ABC):
         offline_y = offline_y.reshape(-1)
         # unlabel 99% of the offline data 
         self.num_samples =  int(self.config.data_ratio*offline_y.shape[0])
-        offline_y[self.num_samples+1:]  = -1
+        #offline_y[self.num_samples+1:]  = -1
         
         return torch.from_numpy(offline_x), torch.from_numpy(mean_x), torch.from_numpy(std_x), torch.from_numpy(offline_y), torch.from_numpy(mean_y), torch.from_numpy(std_y)
 
@@ -367,23 +367,21 @@ class BaseRunner(ABC):
             
             val_loader = None
             val_dataset = []
-            
+            gp_hyper = GP_hyper(device = self.config.training.device[0],
+                                lengthscale = lengthscale,
+                                variance = variance,
+                                noise = noise,
+                                mean_prior = mean_prior)
             accumulate_grad_batches = self.config.training.accumulate_grad_batches 
             for epoch in range(start_epoch, self.config.training.n_epochs):
                 ### generate data from GP and create dataloader
                 start_time = time.time()
-                GP_Model = GP(device=self.config.training.device[0],
-                                x_train=self.offline_x[:self.num_samples],
-                                y_train=self.offline_y[:self.num_samples], 
-                                lengthscale=lengthscale, 
-                                variance=variance, 
-                                noise=noise, 
-                                mean_prior=mean_prior)
+                
                 data_from_GP = sampling_data_from_GP(x_train=self.offline_x,
                                                     y_train=self.offline_y,
                                                     num_samples = self.num_samples,
                                                     device=self.config.training.device[0],
-                                                    base_GP_Model= GP_Model, 
+                                                    base_gp_hyper= gp_hyper, 
                                                     num_functions=self.config.GP.num_functions,
                                                     num_gradient_steps=self.config.GP.num_gradient_steps,
                                                     num_points=self.config.GP.num_points,
