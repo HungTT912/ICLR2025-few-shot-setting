@@ -124,7 +124,7 @@ def main():
     tested_params = df[['eta','alpha','classifier_free_guidance_weight']].to_numpy()
     for eta in [0.0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.5]: 
         for w in [-1.5, -1, -0.5, 0, 0.5, 1, 1.5, 2 , 2.5 , 3, 4]:  
-            for alpha in [0.8]: 
+            for alpha in [1.0]: 
                 results_100th = []
                 results_80th = [] 
                 results_50th = []
