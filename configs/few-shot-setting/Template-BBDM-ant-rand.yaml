@@ -59,7 +59,7 @@ testing:
   clip_denoised: false
   num_candidates: 128
   percentile_sampling: 0.2
-  type_sampling: highest
+  type_sampling: random
   eta: 0 
   classifier_free_guidance_weight : -1 
   alpha : 0.95 
@@ -73,4 +73,4 @@ training:
   validation_interval: 20
 data_ratio : 0.01
 tune: few_shot
-wandb_name: few-shot-setting-ant
+wandb_name: few-shot-setting-ant-rand

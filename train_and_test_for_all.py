@@ -113,7 +113,7 @@ def main():
                                 dataset_kwargs={"max_samples": 10000})
     if task.is_discrete: 
         task.map_to_logits()
-    file_path = f'./few-shot-results/tuning_result_ant_2.csv'
+    file_path = f'./few-shot-results/tuning_result_ant_test_{nconfig.testing.type_sampling}.csv'
 
     if not os.path.isfile(file_path):
         with open(file_path, 'a') as file:
@@ -137,7 +137,7 @@ def main():
                     nconfig.args.train=False 
                     nconfig.args.seed = seed
                     nconfig.model.model_load_path = f'./results/few_shot/AntMorphology-Exact-v0/sampling_lr0.001/initial_lengthscale1.0/delta0.25/seed{seed}/BrownianBridge/checkpoint/top_model_epoch_100.pth'
-                    nconfig.model.optim_sche_load_path = f'ICLR25-few-shot-setting/results/few_shot/AntMorphology-Exact-v0/sampling_lr0.001/initial_lengthscale1.0/delta0.25/seed{seed}/BrownianBridge/checkpoint/top_optim_sche_epoch_100.pth'
+                    nconfig.model.optim_sche_load_path = f'./results/few_shot/AntMorphology-Exact-v0/sampling_lr0.001/initial_lengthscale1.0/delta0.25/seed{seed}/BrownianBridge/checkpoint/top_optim_sche_epoch_100.pth'
                     result = tester(nconfig,task)
                     print("Score : ",result[0]) 
                     results_100th.append(result[0])

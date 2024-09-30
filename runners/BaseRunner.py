@@ -372,7 +372,9 @@ class BaseRunner(ABC):
                                 variance = variance,
                                 noise = noise,
                                 mean_prior = mean_prior)
+            self.base_gp_hyper = gp_hyper 
             accumulate_grad_batches = self.config.training.accumulate_grad_batches 
+            
             for epoch in range(start_epoch, self.config.training.n_epochs):
                 ### generate data from GP and create dataloader
                 start_time = time.time()
@@ -540,12 +542,59 @@ class BaseRunner(ABC):
     @torch.no_grad()
     def test(self, task):
         
-        low_candidates, low_scores = sampling_from_offline_data(x=self.offline_x,
-                                                                y=self.offline_y,
-                                                                n_candidates=self.config.testing.num_candidates, 
-                                                                type=self.config.testing.type_sampling,
-                                                                percentile_sampling=self.config.testing.percentile_sampling,
-                                                                seed=self.config.args.seed)
+        lengthscale = torch.tensor(self.config.GP.initial_lengthscale, device=self.config.training.device[0])
+        variance = torch.tensor(self.config.GP.initial_outputscale, device=self.config.training.device[0])
+        noise = torch.tensor(self.config.GP.noise, device=self.config.training.device[0])
+        mean_prior = torch.tensor(0.0, device = self.config.training.device[0]) 
+        device = self.config.training.device[0]
+        
+        
+        gp_hyper = GP_hyper(device = self.config.training.device[0],
+                            lengthscale = lengthscale,
+                            variance = variance,
+                            noise = noise,
+                            mean_prior = mean_prior)
+
+        self.base_gp_hyper = gp_hyper 
+        # low_candidates, low_scores = sampling_from_offline_data(x=self.offline_x,
+        #                                                         y=self.offline_y,
+        #                                                         n_candidates=self.config.testing.num_candidates, 
+        #                                                         type=self.config.testing.type_sampling,
+        #                                                         percentile_sampling=self.config.testing.percentile_sampling,
+        #                                                         seed=self.config.args.seed)
+        unlabeled_x = self.offline_x[self.num_samples+1:] 
+        normdist = torch.distributions.Normal(0,1)
+        selected_unlabel = torch.randperm(self.offline_x.shape[0]-self.num_samples)[:128-self.num_samples]+ self.num_samples
+        x_unlabel = self.offline_x[selected_unlabel] 
+        y_unlabel = torch.full((x_unlabel.shape[0],),0.0).to(device) 
+        if self.config.testing.type_sampling == 'avg': 
+            
+            num_functions = 100 
+            for functions in range(num_functions): 
+                GP_Model = GP(device=self.config.training.device[0],
+                            x_train=x_unlabel,
+                            y_train=y_unlabel,
+                            lengthscale=self.base_gp_hyper.lengthscale, 
+                            variance=self.base_gp_hyper.variance, 
+                            noise=self.base_gp_hyper.noise, 
+                            mean_prior=self.base_gp_hyper.mean_prior)
+                new_lengthscale = self.base_gp_hyper.lengthscale + self.config.GP.delta_lengthscale*(torch.rand(1, device=device)*2 -1)
+                new_variance = self.base_gp_hyper.variance + self.config.GP.delta_variance*(torch.rand(1, device=device)*2 -1)
+                GP_Model.set_hyper(lengthscale=new_lengthscale, variance=new_variance)
+                y_pred = GP_Model.sampling_pseudo_label() 
+                y_unlabel += y_pred 
+            low_scores = torch.concat([self.offline_y[:self.num_samples],y_unlabel/num_functions]) 
+            low_candidates = torch.concat([self.offline_x[:self.num_samples],x_unlabel])
+        elif self.config.testing.type_sampling == 'random':
+            y_mean = torch.mean(self.offline_y[:self.num_samples]) 
+            noise = normdist.sample((self.config.testing.num_candidates-self.num_samples,))
+            pseudo_label = torch.full((self.config.testing.num_candidates-self.num_samples,),y_mean) + noise 
+            low_scores = torch.concat([self.offline_y[:self.num_samples],pseudo_label.to(device)])
+            low_candidates = torch.concat([self.offline_x[:self.num_samples],x_unlabel.to(device)]) 
+            
+        else: 
+            raise NotImplementedError('Please implement it')
+        # import pdb ; pdb.set_trace()
         if self.use_ema:
             self.apply_ema()
         self.net.eval()
