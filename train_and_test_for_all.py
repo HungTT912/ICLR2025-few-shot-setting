@@ -136,8 +136,8 @@ def main():
                     nconfig.testing.alpha = alpha 
                     nconfig.args.train=False 
                     nconfig.args.seed = seed
-                    nconfig.model.model_load_path = f'./results/few_shot/AntMorphology-Exact-v0/sampling_lr0.001/initial_lengthscale1.0/delta0.25/seed{seed}/BrownianBridge/checkpoint/top_model_epoch_100.pth'
-                    nconfig.model.optim_sche_load_path = f'./results/few_shot/AntMorphology-Exact-v0/sampling_lr0.001/initial_lengthscale1.0/delta0.25/seed{seed}/BrownianBridge/checkpoint/top_optim_sche_epoch_100.pth'
+                    nconfig.model.model_load_path = f'./results/few_shot/TFBind8-Exact-v0/sampling_lr0.001/initial_lengthscale1.0/delta0.25/seed{seed}/BrownianBridge/checkpoint/top_model_epoch_100.pth'
+                    nconfig.model.optim_sche_load_path = f'./results/few_shot/TFBind8-Exact-v0/sampling_lr0.001/initial_lengthscale1.0/delta0.25/seed{seed}/BrownianBridge/checkpoint/top_optim_sche_epoch_100.pth'
                     result = tester(nconfig,task)
                     print("Score : ",result[0]) 
                     results_100th.append(result[0])
