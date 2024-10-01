@@ -150,7 +150,7 @@ def sampling_data_from_trajectories(x_train, y_train, num_points = 1024, thresho
     return datasets 
 
 ### Sampling data from GP model
-def sampling_data_from_GP(x_train, y_train,num_fit_samples, num_samples, device, base_gp_hyper, num_gradient_steps = 50, num_functions = 5, num_points = 10, learning_rate = 0.001, delta_lengthscale = 0.1, delta_variance = 0.1, seed = 0, threshold_diff = 0.1):
+def sampling_data_from_GP(x_train, y_train, num_samples, device, base_gp_hyper, num_gradient_steps = 50, num_functions = 5, num_points = 10, learning_rate = 0.001, delta_lengthscale = 0.1, delta_variance = 0.1, seed = 0, threshold_diff = 0.1):
     lengthscale = base_gp_hyper.lengthscale
     variance = base_gp_hyper.variance 
     torch.manual_seed(seed=seed)
@@ -202,10 +202,10 @@ def sampling_data_from_GP(x_train, y_train,num_fit_samples, num_samples, device,
         base_GP_Model.set_hyper(lengthscale=new_lengthscale, variance=new_variance)
         y_pred = base_GP_Model.sampling_pseudo_label()
         y_train[num_samples+1:] = y_pred
-        selected_fit_idx = torch.randperm(x_train.shape[0])[:num_fit_samples]
+        # selected_fit_idx = torch.randperm(x_train.shape[0])[:num_fit_samples]
         GP_Model = GP(device=device,
-                    x_train=x_train[selected_fit_idx],
-                    y_train=y_train[selected_fit_idx],
+                    x_train=x_train,
+                    y_train=y_train,
                     lengthscale=base_GP_Model.kernel.lengthscale, 
                     variance=base_GP_Model.variance, 
                     noise=base_GP_Model.noise, 

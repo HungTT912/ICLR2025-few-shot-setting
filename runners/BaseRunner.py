@@ -48,7 +48,7 @@ class BaseRunner(ABC):
         #                                                         with_time=True)
         if self.config.args.train:
             self.config.result.ckpt_path = make_save_dirs(self.config.args,
-                                                    prefix=self.config.tune+'/'+ self.config.task.name + f'/num_fit_samples{self.config.GP.num_fit_samples}/sampling_lr{self.config.GP.sampling_from_GP_lr}/initial_lengthscale{self.config.GP.initial_lengthscale}/delta{self.config.GP.delta_lengthscale}/seed{self.config.args.seed}',
+                                                    prefix=self.config.tune+'/'+ self.config.task.name + f'/sampling_lr{self.config.GP.sampling_from_GP_lr}/initial_lengthscale{self.config.GP.initial_lengthscale}/delta{self.config.GP.delta_lengthscale}/seed{self.config.args.seed}',
                                                     suffix=self.config.model.model_name,
                                                     with_time=False)
             # self.config.result.ckpt_path = make_save_dirs(self.config.args,
@@ -381,7 +381,7 @@ class BaseRunner(ABC):
                 
                 data_from_GP = sampling_data_from_GP(x_train=self.offline_x,
                                                     y_train=self.offline_y,
-                                                    num_fit_samples = self.config.GP.num_fit_samples,
+                                                    # num_fit_samples = self.config.GP.num_fit_samples,
                                                     num_samples = self.num_samples,
                                                     device=self.config.training.device[0],
                                                     base_gp_hyper= gp_hyper, 
