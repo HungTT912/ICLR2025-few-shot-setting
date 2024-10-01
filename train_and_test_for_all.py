@@ -136,8 +136,8 @@ def main():
                     nconfig.testing.alpha = alpha 
                     nconfig.args.train=False 
                     nconfig.args.seed = seed
-                    nconfig.model.model_load_path = f'./results/few_shot/num_fit_samples{nconfig.GP.num_fit_samples}/TFBind8-Exact-v0/sampling_lr{nconfig.GP.sampling_from_GP_lr}/initial_lengthscale{nconfig.GP.initial_lengthscale}/delta0.25/seed{seed}/BrownianBridge/checkpoint/top_model_epoch_100.pth'
-                    nconfig.model.optim_sche_load_path = f'./results/few_shot/num_fit_samples{nconfig.GP.num_fit_samples}/TFBind8-Exact-v0/sampling_lr{nconfig.GP.sampling_from_GP_lr}/initial_lengthscale{nconfig.GP.initial_lengthscale}/delta0.25/seed{seed}/BrownianBridge/checkpoint/top_optim_sche_epoch_100.pth'
+                    nconfig.model.model_load_path = f'./results/few_shot/TFBind8-Exact-v0/num_fit_samples{nconfig.GP.num_fit_samples}//sampling_lr{nconfig.GP.sampling_from_GP_lr}/initial_lengthscale{nconfig.GP.initial_lengthscale}/delta0.25/seed{seed}/BrownianBridge/checkpoint/top_model_epoch_100.pth'
+                    nconfig.model.optim_sche_load_path = f'./results/few_shot/TFBind8-Exact-v0/num_fit_samples{nconfig.GP.num_fit_samples}//sampling_lr{nconfig.GP.sampling_from_GP_lr}/initial_lengthscale{nconfig.GP.initial_lengthscale}/delta0.25/seed{seed}/BrownianBridge/checkpoint/top_optim_sche_epoch_100.pth'
                     result = tester(nconfig,task)
                     print("Score : ",result[0]) 
                     results_100th.append(result[0])
