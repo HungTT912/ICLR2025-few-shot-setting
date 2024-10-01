@@ -381,6 +381,7 @@ class BaseRunner(ABC):
                 
                 data_from_GP = sampling_data_from_GP(x_train=self.offline_x,
                                                     y_train=self.offline_y,
+                                                    num_fit_samples = self.config.GP.num_fit_samples,
                                                     num_samples = self.num_samples,
                                                     device=self.config.training.device[0],
                                                     base_gp_hyper= gp_hyper, 
