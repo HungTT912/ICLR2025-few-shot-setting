@@ -8,7 +8,8 @@ import numpy as np
 import pandas as pd 
 import csv
 import wandb 
-# wandb.login(key="1cfab558732ccb32d573a7276a337d22b7d8b371")
+wandb.login(key="1cfab558732ccb32d573a7276a337d22b7d8b371")
+import design_bench
 
 from utils import dict2namespace, get_runner, namespace2dict
 
@@ -78,10 +79,10 @@ def trainer(config):
     set_random_seed(config.args.seed)
     runner = get_runner(config.runner, config)
     return runner.train()
-def tester(config):
+def tester(config,task):
     set_random_seed(config.args.seed)
     runner = get_runner(config.runner, config)
-    return runner.test() 
+    return runner.test(task) 
 
 def main():
     nconfig, dconfig = parse_args_and_config()
@@ -94,6 +95,7 @@ def main():
         nconfig.training.device = [torch.device("cpu")]
     else:
         nconfig.training.device = [torch.device(f"cuda:{gpu_ids}")]
+    
     seed_list = range(8)
     model_load_path_list = [] 
     optim_sche_load_path_list = []
@@ -103,6 +105,66 @@ def main():
         model_load_path, optim_sche_load_path = trainer(nconfig)
         model_load_path_list.append(model_load_path) 
         optim_sche_load_path_list.append(optim_sche_load_path)
+    
+    if nconfig.task.name != 'TFBind10-Exact-v0':
+        task = design_bench.make(nconfig.task.name)
+    else:
+        task = design_bench.make(nconfig.task.name,
+                                dataset_kwargs={"max_samples": 10000})
+    if task.is_discrete: 
+        task.map_to_logits()
+    file_path = f'./few-shot-results/tuning_result_{nconfig.task.name}_test_{nconfig.testing.type_sampling}_{nconfig.GP.num_fit_samples}.csv'
+
+    if not os.path.isfile(file_path):
+        with open(file_path, 'a') as file:
+            header = ['eta','alpha','classifier_free_guidance_weight', 'mean (100th)', 'std (100th)', 'mean (80th)', 'std (80th)', 'mean (50th)', 'std (50th)']
+            writer = csv.writer(file)
+            writer.writerow(header)
+    df = pd.read_csv(file_path) 
+    tested_params = df[['eta','alpha','classifier_free_guidance_weight']].to_numpy()
+    for eta in [0.1]: 
+        for w in [-1]:  
+            for alpha in [0.8,0.9,0.95,1.0]: 
+                results_100th = []
+                results_80th = [] 
+                results_50th = []
+                if [eta, alpha, w] in tested_params: 
+                    continue 
+                for seed in seed_list: 
+                    nconfig.model.BB.params.eta = eta 
+                    nconfig.testing.classifier_free_guidance_weight = w 
+                    nconfig.testing.alpha = alpha 
+                    nconfig.args.train=False 
+                    nconfig.args.seed = seed
+                    nconfig.model.model_load_path = f'./results/few_shot/{nconfig.task.name}/sampling_lr{nconfig.GP.sampling_from_GP_lr}/initial_lengthscale{nconfig.GP.initial_lengthscale}/delta0.25/seed{seed}/BrownianBridge/checkpoint/top_model_epoch_100.pth'
+                    nconfig.model.optim_sche_load_path = f'./results/few_shot/{nconfig.task.name}/sampling_lr{nconfig.GP.sampling_from_GP_lr}/initial_lengthscale{nconfig.GP.initial_lengthscale}/delta0.25/seed{seed}/BrownianBridge/checkpoint/top_optim_sche_epoch_100.pth'
+                    result = tester(nconfig,task)
+                    print("Score : ",result[0]) 
+                    results_100th.append(result[0])
+                    results_80th.append(result[1]) 
+                    results_50th.append(result[2])
+                assert len(results_100th)==8 
+                np_result_100th = np.array(results_100th)
+                mean_score_100th = np_result_100th.mean() 
+                std_score_100th = np_result_100th.std()
+                np_result_80th = np.array(results_80th)
+                mean_score_80th = np_result_80th.mean() 
+                std_score_80th = np_result_80th.std()
+                np_result_50th = np.array(results_50th)
+                mean_score_50th = np_result_50th.mean() 
+                std_score_50th = np_result_50th.std()
+                print(nconfig.task.name)
+                print(mean_score_100th, std_score_100th)
+                print(mean_score_80th, std_score_80th)
+                print(mean_score_50th, std_score_50th)
+                with open(file_path, 'a') as file:
+                    new_row = [eta, alpha, w, mean_score_100th, std_score_100th, mean_score_80th, std_score_80th, mean_score_50th, std_score_50th]
+                    writer = csv.writer(file)
+                    writer.writerow(new_row)
+                    df = pd.read_csv(file_path)
+                    table = wandb.Table(dataframe=df)
+                    wandb.log({"data_table": table})
+    
     nconfig.args.train = False 
     wandb.finish() 
     
