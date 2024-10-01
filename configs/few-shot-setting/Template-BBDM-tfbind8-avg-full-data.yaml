@@ -4,7 +4,7 @@ GP:
   initial_lengthscale: 5.0
   initial_outputscale: 5.0
   noise: 0.01
-  num_fit_samples: 15500
+  num_fit_samples: 32898
   num_functions: 8
   num_gradient_steps: 100
   num_points: 1024
