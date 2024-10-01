@@ -59,7 +59,7 @@ testing:
   clip_denoised: false
   num_candidates: 128
   percentile_sampling: 0.2
-  type_sampling: highest
+  type_sampling: rand
 training:
   accumulate_grad_batches: 2
   batch_size: 64
