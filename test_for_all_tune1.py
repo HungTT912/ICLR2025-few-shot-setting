@@ -102,7 +102,8 @@ def main():
     for seed in seed_list:
         nconfig.args.train = True 
         nconfig.args.seed = seed 
-        model_load_path, optim_sche_load_path = trainer(nconfig)
+        model_load_path = f'results/few_shot/{nconfig.task.name}/sampling_lr0.001/initial_lengthscale1.0/delta0.25/seed{seed}/BrownianBridge/checkpoint/top_model_epoch_100.pth'
+        optim_sche_load_path = f'results/few_shot/{nconfig.task.name}/sampling_lr0.001/initial_lengthscale1.0/delta0.25/seed{seed}/BrownianBridge/checkpoint//top_optim_sche_epoch_100.pth'
         model_load_path_list.append(model_load_path) 
         optim_sche_load_path_list.append(optim_sche_load_path)
     
@@ -122,8 +123,8 @@ def main():
             writer.writerow(header)
     df = pd.read_csv(file_path) 
     tested_params = df[['eta','alpha','classifier_free_guidance_weight']].to_numpy()
-    for eta in [0.0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.5]: 
-        for w in [-1.5, -1, -0.5, 0, 0.5, 1, 1.5, 2 , 2.5 , 3, 4]:  
+    for eta in [0.2, 0.25, 0.5, 0.0, 0.05, 0.1, 0.15]: 
+        for w in [-2.0, -1.5, -1, -0.5, 0, 0.5, 1, 1.5, 2 , 2.5 , 3, 4]:  
             for alpha in [0.8]: 
                 results_100th = []
                 results_80th = [] 
