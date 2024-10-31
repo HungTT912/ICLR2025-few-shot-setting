@@ -150,70 +150,30 @@ def sampling_data_from_trajectories(x_train, y_train, num_points = 1024, thresho
     return datasets 
 
 ### Sampling data from GP model
-def sampling_data_from_GP(x_train, y_train, num_samples, device, base_gp_hyper, num_gradient_steps = 50, num_functions = 5, num_points = 10, learning_rate = 0.001, delta_lengthscale = 0.1, delta_variance = 0.1, seed = 0, threshold_diff = 0.1):
-    lengthscale = base_gp_hyper.lengthscale
-    variance = base_gp_hyper.variance 
+def sampling_data_from_GP(x_train, device, GP_Model, num_gradient_steps = 50, num_functions = 5, num_points = 10, learning_rate = 0.001, delta_lengthscale = 0.1, delta_variance = 0.1, seed = 0, threshold_diff = 0.1):
+    lengthscale = GP_Model.kernel.lengthscale
+    variance = GP_Model.variance 
     torch.manual_seed(seed=seed)
     datasets={}
     learning_rate_vec = torch.cat((-learning_rate*torch.ones(num_points, x_train.shape[1], device=device), learning_rate*torch.ones(num_points, x_train.shape[1], device = device)))
 
-    base_GP_Model = GP(device=device,
-                    x_train=x_train[num_samples+1:],
-                    y_train=y_train[num_samples+1:],
-                    lengthscale=base_gp_hyper.lengthscale, 
-                    variance=base_gp_hyper.variance, 
-                    noise=base_gp_hyper.noise, 
-                    mean_prior=base_gp_hyper.mean_prior)
 
     for iter in range(num_functions):
         datasets[f'f{iter}']=[]
         # add noise to lengthscale and variance
+        # new_lengthscale = lengthscale*(1 + delta_lengthscale*(torch.rand(1, device=device)*2 -1))
+        # new_variance = variance*(1 + delta_variance*(torch.rand(1, device=device)*2 -1))
+        
         new_lengthscale = lengthscale + delta_lengthscale*(torch.rand(1, device=device)*2 -1)
         new_variance = variance + delta_variance*(torch.rand(1, device=device)*2 -1)
         # import pdb ; pdb.set_trace()
         # change lengthscale and variance of GP
-        # sub_tensor_x = x_train[num_samples+1:]
-        # sub_tensor_y = y_train[num_samples+1:] 
-        # shuffle_idx = torch.randperm(sub_tensor_x.shape[0])
-        # sub_tensor_x = sub_tensor_x[shuffle_idx]
-        # sub_tensor_y = sub_tensor_y[shuffle_idx]
-        # x_train[num_samples+1:] = sub_tensor_x
-        # y_train[num_samples+1:] = sub_tensor_y
-        # batch_size = 228 
-        # x_batches = [x_train[i:i+batch_size] for i in range(0,x_train.shape[0],batch_size)]
-        # y_batches = [y_train[i:i+batch_size] for i in range(0,x_train.shape[0],batch_size)] 
-        # batches = zip(x_batches,y_batches)
-        # mae = 0.0 
-        # for x_batch, y_batch in batches:  
-        #     base_GP_Model = GP(device=device,
-        #             x_train=x_batch,
-        #             y_train=y_batch,
-        #             lengthscale=base_gp_hyper.lengthscale, 
-        #             variance=base_gp_hyper.variance, 
-        #             noise=base_gp_hyper.noise, 
-        #             mean_prior=base_gp_hyper.mean_prior)
-        #     base_GP_Model.set_hyper(new_lengthscale,new_variance)
-        #     y_pred = base_GP_Model.sampling_pseudo_label()
-        #     mae += torch.sum(torch.abs(y_pred-y_batch))
-        # mae /= x_train[num_samples+1:].shape[0]
-        # print(mae)
-        # exit(0)
+        GP_Model.set_hyper(lengthscale=new_lengthscale,variance = new_variance)
         
-        base_GP_Model.set_hyper(lengthscale=new_lengthscale, variance=new_variance)
-        y_pred = base_GP_Model.sampling_pseudo_label()
-        y_train[num_samples+1:] = y_pred
-        # selected_fit_idx = torch.randperm(x_train.shape[0])[:num_fit_samples]
-        GP_Model = GP(device=device,
-                    x_train=x_train,
-                    y_train=y_train,
-                    lengthscale=base_GP_Model.kernel.lengthscale, 
-                    variance=base_GP_Model.variance, 
-                    noise=base_GP_Model.noise, 
-                    mean_prior=base_GP_Model.mean_prior)
-        GP_Model.set_hyper(lengthscale=base_GP_Model.kernel.lengthscale, variance=base_GP_Model.variance)
-        
+        # select random num_points points from offline data
+        # y_pred = GP_Model.mean_posterior(x_train)
 
-        selected_indices = torch.argsort(y_train)[-num_points:]
+        selected_indices = torch.randperm(x_train.shape[0])[:num_points]
         # low_y = y_pred[selected_indices].clone().detach().requires_grad_(True)
         low_x = x_train[selected_indices].clone().detach().requires_grad_(True)
         high_x = x_train[selected_indices].clone().detach().requires_grad_(True)
@@ -245,11 +205,10 @@ def sampling_data_from_GP(x_train, y_train, num_samples, device, base_gp_hyper, 
             datasets[f'f{iter}'].append(sample)
 
     # restore lengthscale and variance of GP
-    # base_GP_Model.kernel.lengthscale = lengthscale
-    # base_GP_Model.variance = variance
+    GP_Model.kernel.lengthscale = lengthscale
+    GP_Model.variance = variance
     
     return datasets
-
 class CustomDataset(Dataset):
     def __init__(self, data):
         self.data = data

@@ -118,7 +118,7 @@ class BaseRunner(ABC):
         offline_y = offline_y.reshape(-1)
         # unlabel 99% of the offline data 
         self.num_samples =  int(self.config.data_ratio*offline_y.shape[0])
-        #offline_y[self.num_samples+1:]  = -1
+        offline_y[self.num_samples+1:]  = -1
         
         return torch.from_numpy(offline_x), torch.from_numpy(mean_x), torch.from_numpy(std_x), torch.from_numpy(offline_y), torch.from_numpy(mean_y), torch.from_numpy(std_y)
 
@@ -349,43 +349,66 @@ class BaseRunner(ABC):
 
         try:
             # initialize params for GP
-            
             lengthscale = torch.tensor(self.config.GP.initial_lengthscale, device=self.config.training.device[0])
             variance = torch.tensor(self.config.GP.initial_outputscale, device=self.config.training.device[0])
             noise = torch.tensor(self.config.GP.noise, device=self.config.training.device[0])
-            mean_prior = torch.tensor(0.0, device = self.config.training.device[0])
+            mean_prior = torch.tensor(0.0, device = self.config.training.device[0]) 
             
-            #GP_Model.set_hyper(lengthscale=lengthscale,variance=variance)
+            base_lengthscale = torch.tensor(self.config.base_GP.initial_lengthscale, device=self.config.training.device[0])
+            base_variance = torch.tensor(self.config.base_GP.initial_outputscale, device=self.config.training.device[0])
+            base_noise = torch.tensor(self.config.base_GP.noise, device=self.config.training.device[0])
+            mean_prior = torch.tensor(0.0, device = self.config.training.device[0]) 
             
-            # if self.config.GP.type_of_initial_points == 'highest':
-            #     best_indices = torch.argsort(self.offline_y)[-1024:]
-            #     self.best_x = self.offline_x[best_indices]
-            # elif self.config.GP.type_of_initial_points == 'lowest': 
-            #     best_indices = torch.argsort(self.offline_y)[:1024]
-            #     self.best_x = self.offline_x[best_indices]
-            # else : 
-            #     self.best_x = self.offline_x 
+            device = self.config.training.device[0]
             
+            
+
             val_loader = None
             val_dataset = []
-            gp_hyper = GP_hyper(device = self.config.training.device[0],
-                                lengthscale = lengthscale,
-                                variance = variance,
-                                noise = noise,
-                                mean_prior = mean_prior)
-            self.base_gp_hyper = gp_hyper 
-            accumulate_grad_batches = self.config.training.accumulate_grad_batches 
             
+            base_GP_Model = GP(device=self.config.training.device[0],
+                                x_train=self.offline_x[self.num_samples+1:],
+                                y_train=self.offline_y[self.num_samples+1:],
+                                lengthscale=base_lengthscale,
+                                variance=base_variance,
+                                noise = base_noise,
+                                mean_prior=mean_prior)
+            
+            accumulate_grad_batches = self.config.training.accumulate_grad_batches 
             for epoch in range(start_epoch, self.config.training.n_epochs):
                 ### generate data from GP and create dataloader
                 start_time = time.time()
                 
-                data_from_GP = sampling_data_from_GP(x_train=self.offline_x,
-                                                    y_train=self.offline_y,
-                                                    # num_fit_samples = self.config.GP.num_fit_samples,
-                                                    num_samples = self.num_samples,
+                new_base_lengthscale = base_lengthscale + self.config.base_GP.delta_lengthscale*(torch.rand(1, device=device)*2 -1)
+                new_base_variance = base_variance + self.config.base_GP.delta_variance*(torch.rand(1, device=device)*2 -1)
+                
+                base_GP_Model.set_hyper(lengthscale=new_base_lengthscale, variance=new_base_variance)
+                
+                self.offline_y[self.num_samples+1:] = base_GP_Model.sampling_pseudo_label()
+                best_indices = torch.argsort(self.offline_y)[-1024:]
+                self.best_x = self.offline_x[best_indices]
+                
+                
+                if self.config.task.name == 'TFBind8-Exact-v0': 
+                    selected_fit_samples = torch.randperm(self.offline_x.shape[0])[:self.config.GP.num_fit_samples]
+                    GP_Model = GP(device=self.config.training.device[0],
+                                x_train=self.offline_x[selected_fit_samples],
+                                y_train=self.offline_y[selected_fit_samples], 
+                                lengthscale=lengthscale, 
+                                variance=variance, 
+                                noise=noise, 
+                                mean_prior=mean_prior)
+                else: 
+                    GP_Model = GP(device=self.config.training.device[0],
+                                x_train=self.offline_x,
+                                y_train=self.offline_y, 
+                                lengthscale=lengthscale, 
+                                variance=variance, 
+                                noise=noise, 
+                                mean_prior=mean_prior)
+                data_from_GP = sampling_data_from_GP(x_train=self.best_x,
                                                     device=self.config.training.device[0],
-                                                    base_gp_hyper= self.config.base_GP, 
+                                                    GP_Model=GP_Model,
                                                     num_functions=self.config.GP.num_functions,
                                                     num_gradient_steps=self.config.GP.num_gradient_steps,
                                                     num_points=self.config.GP.num_points,
