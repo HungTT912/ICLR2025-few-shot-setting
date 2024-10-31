@@ -349,10 +349,11 @@ class BaseRunner(ABC):
 
         try:
             # initialize params for GP
+            
             lengthscale = torch.tensor(self.config.GP.initial_lengthscale, device=self.config.training.device[0])
             variance = torch.tensor(self.config.GP.initial_outputscale, device=self.config.training.device[0])
             noise = torch.tensor(self.config.GP.noise, device=self.config.training.device[0])
-            mean_prior = torch.tensor(0.0, device = self.config.training.device[0]) 
+            mean_prior = torch.tensor(0.0, device = self.config.training.device[0])
             
             #GP_Model.set_hyper(lengthscale=lengthscale,variance=variance)
             
@@ -384,7 +385,7 @@ class BaseRunner(ABC):
                                                     # num_fit_samples = self.config.GP.num_fit_samples,
                                                     num_samples = self.num_samples,
                                                     device=self.config.training.device[0],
-                                                    base_gp_hyper= gp_hyper, 
+                                                    base_gp_hyper= self.config.base_GP, 
                                                     num_functions=self.config.GP.num_functions,
                                                     num_gradient_steps=self.config.GP.num_gradient_steps,
                                                     num_points=self.config.GP.num_points,

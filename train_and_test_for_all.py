@@ -113,7 +113,7 @@ def main():
                                 dataset_kwargs={"max_samples": 10000})
     if task.is_discrete: 
         task.map_to_logits()
-    file_path = f'./few-shot-results/tuning_1_result_{nconfig.task.name}_test_{nconfig.testing.type_sampling}.csv'
+    file_path = f'./few-shot-results/tuning_2_result_{nconfig.task.name}_test_{nconfig.testing.type_sampling}.csv'
 
     if not os.path.isfile(file_path):
         with open(file_path, 'a') as file:
@@ -124,7 +124,7 @@ def main():
     tested_params = df[['eta','alpha','classifier_free_guidance_weight']].to_numpy()
     for eta in [0.0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.5]: 
         for w in [-1.5, -1, -0.5, 0, 0.5, 1, 1.5, 2 , 2.5 , 3, 4]:  
-            for alpha in [0.8]: 
+            for alpha in [0.8,0.85,0.9,0.95,1.0]: 
                 results_100th = []
                 results_80th = [] 
                 results_50th = []
