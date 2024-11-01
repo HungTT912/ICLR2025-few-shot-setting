@@ -65,6 +65,34 @@ def set_random_seed(SEED=1234):
     torch.backends.cudnn.deterministic = True
 
 
+def get_offline_data(nconfig):
+    if nconfig.task.name != 'TFBind10-Exact-v0':
+        task = design_bench.make(nconfig.task.name)
+    else:
+        task = design_bench.make(nconfig.task.name,
+                                dataset_kwargs={"max_samples": 10000})
+
+    offline_x = task.x
+    if task.is_discrete:
+        offline_x = task.to_logits(offline_x).reshape(offline_x.shape[0], -1)
+
+    mean_x = np.mean(offline_x, axis=0)
+    std_x = np.std(offline_x, axis=0)
+    std_x = np.where(std_x == 0, 1.0, std_x)
+    
+    offline_y = task.y
+    mean_y = np.mean(offline_y, axis=0)
+    std_y = np.std(offline_y, axis=0)
+    
+    shuffle_idx = np.random.permutation(offline_x.shape[0])
+
+    offline_x = offline_x[shuffle_idx]
+    offline_y = offline_y[shuffle_idx]
+    offline_y = offline_y.reshape(-1)
+    
+    return torch.from_numpy(offline_x), torch.from_numpy(mean_x), torch.from_numpy(std_x), torch.from_numpy(offline_y), torch.from_numpy(mean_y), torch.from_numpy(std_y)
+
+
 def CPU_singleGPU_launcher(config):
     set_random_seed(config.args.seed)
     runner = get_runner(config.runner, config)
@@ -75,20 +103,32 @@ def CPU_singleGPU_launcher(config):
             runner.test()
     return
 
+
 def trainer(config): 
     set_random_seed(config.args.seed)
     runner = get_runner(config.runner, config)
     return runner.train()
-def tester(config,task):
+def tester(config, task):
+    global offline_x_list, mean_x_list, std_x_list, offline_y_list, mean_y_list, std_y_list 
+    offline_x = offline_x_list[config.args.seed] 
+    offline_y = offline_y_list[config.args.seed]
+    mean_x = mean_x_list[config.args.seed] 
+    mean_y = mean_y_list[config.args.seed] 
+    std_x = std_x_list[config.args.seed] 
+    std_y = std_y_list[config.args.seed] 
+    
     set_random_seed(config.args.seed)
     runner = get_runner(config.runner, config)
+    runner.offline_x, runner.mean_offline_x, runner.std_offline_x = offline_x, mean_x, std_x 
+    runner.offline_y, runner.mean_offline_y, runner.std_offline_y = offline_y, mean_y, std_y 
+    
     return runner.test(task) 
 
 def main():
     nconfig, dconfig = parse_args_and_config()
-    # wandb.init(project='BBDM-fewshot-setting',
-    #         name=nconfig.wandb_name,
-    #         config = dconfig) 
+    wandb.init(project='BBDM-fewshot-setting',
+            name=nconfig.wandb_name,
+            config = dconfig) 
     args = nconfig.args
     gpu_ids = args.gpu_ids
     if gpu_ids == "-1": # Use CPU
@@ -102,7 +142,8 @@ def main():
     for seed in seed_list:
         nconfig.args.train = True 
         nconfig.args.seed = seed 
-        model_load_path, optim_sche_load_path = trainer(nconfig)
+        model_load_path = f'results/few_shot/tune_2/{nconfig.task.name}/sampling_lr0.001/initial_lengthscale1.0/delta0.25/seed{seed}/BrownianBridge/checkpoint/top_model_epoch_100.pth'
+        optim_sche_load_path = f'results/few_shot/tune_2/{nconfig.task.name}/sampling_lr0.001/initial_lengthscale1.0/delta0.25/seed{seed}/BrownianBridge/checkpoint/top_optim_sche_epoch_100.pth'
         model_load_path_list.append(model_load_path) 
         optim_sche_load_path_list.append(optim_sche_load_path)
     
@@ -113,6 +154,31 @@ def main():
                                 dataset_kwargs={"max_samples": 10000})
     if task.is_discrete: 
         task.map_to_logits()
+        
+    global offline_x_list, mean_x_list, std_x_list, offline_y_list, mean_y_list, std_y_list 
+    offline_x_list, mean_x_list, std_x_list, offline_y_list, mean_y_list, std_y_list = [],[],[],[],[],[] 
+    for seed in seed_list : 
+        global offline_x, mean_x, std_x, offline_y, mean_y, std_y 
+        set_random_seed(seed)
+        offline_x, mean_x, std_x , offline_y, mean_y , std_y = get_offline_data(nconfig)
+        offline_x = (offline_x - mean_x) / std_x
+        offline_y = (offline_y - mean_y) / std_y   
+        # shuffle_idx = np.random.permutation(offline_x.shape[0])
+        # offline_x = offline_x[shuffle_idx]
+        # offline_y = offline_y[shuffle_idx]
+        offline_x = offline_x.to(nconfig.training.device[0])
+        offline_y = offline_y.to(nconfig.training.device[0])
+        # sorted_indices = torch.argsort(offline_y)[-128:] 
+        # offline_x = offline_x[sorted_indices] 
+        # offline_y = offline_y[sorted_indices] 
+        
+        offline_x_list.append(offline_x) 
+        offline_y_list.append(offline_y) 
+        mean_x_list.append(mean_x) 
+        std_x_list.append(std_x) 
+        mean_y_list.append(mean_y)
+        std_y_list.append(std_y) 
+        
     file_path = f'./few-shot-results/tuning_2_result_{nconfig.task.name}_test_{nconfig.testing.type_sampling}.csv'
 
     if not os.path.isfile(file_path):
@@ -120,11 +186,14 @@ def main():
             header = ['eta','alpha','classifier_free_guidance_weight', 'mean (100th)', 'std (100th)', 'mean (80th)', 'std (80th)', 'mean (50th)', 'std (50th)']
             writer = csv.writer(file)
             writer.writerow(header)
+    
+    
+    
     df = pd.read_csv(file_path) 
     tested_params = df[['eta','alpha','classifier_free_guidance_weight']].to_numpy()
-    for eta in [0.0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.5]: 
-        for w in [-1.5, -1, -0.5, 0, 0.5, 1, 1.5, 2 , 2.5 , 3, 4]:  
-            for alpha in [0.8,0.85,0.9,0.95,1.0]: 
+    for eta in [0.2, 0.25, 0.5, 0.0, 0.05, 0.1, 0.15]: 
+        for w in [-2.0, -1.5, -1, -0.5, 0, 0.5, 1, 1.5, 2 , 2.5 , 3, 4]:  
+            for alpha in [0.8]: 
                 results_100th = []
                 results_80th = [] 
                 results_50th = []

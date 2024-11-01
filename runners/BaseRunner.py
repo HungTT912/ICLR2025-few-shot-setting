@@ -81,16 +81,16 @@ class BaseRunner(ABC):
         
         # get offline data from design-bench
         
-        # if self.config.args.train == True: 
-        self.offline_x, self.mean_offline_x, self.std_offline_x, self.offline_y, self.mean_offline_y, self.std_offline_y = self.get_offline_data()
+        if self.config.args.train == True: 
+            self.offline_x, self.mean_offline_x, self.std_offline_x, self.offline_y, self.mean_offline_y, self.std_offline_y = self.get_offline_data()
+            
+            if self.config.task.normalize_x:
+                self.offline_x = (self.offline_x - self.mean_offline_x) / self.std_offline_x
+            if self.config.task.normalize_y:
+                self.offline_y = (self.offline_y - self.mean_offline_y) / self.std_offline_y
         
-        if self.config.task.normalize_x:
-            self.offline_x = (self.offline_x - self.mean_offline_x) / self.std_offline_x
-        if self.config.task.normalize_y:
-            self.offline_y = (self.offline_y - self.mean_offline_y) / self.std_offline_y
-    
-        self.offline_x = self.offline_x.to(self.config.training.device[0])
-        self.offline_y = self.offline_y.to(self.config.training.device[0])
+            self.offline_x = self.offline_x.to(self.config.training.device[0])
+            self.offline_y = self.offline_y.to(self.config.training.device[0])
 
     def get_offline_data(self):
         if self.config.task.name != 'TFBind10-Exact-v0':
