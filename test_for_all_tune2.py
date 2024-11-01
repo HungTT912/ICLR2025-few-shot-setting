@@ -89,8 +89,11 @@ def get_offline_data(nconfig):
     offline_x = offline_x[shuffle_idx]
     offline_y = offline_y[shuffle_idx]
     offline_y = offline_y.reshape(-1)
+    # unlabel 99% of the offline data 
+    num_samples =  int(nconfig.data_ratio*offline_y.shape[0])
+    offline_y[num_samples+1:]  = -1
     
-    return torch.from_numpy(offline_x), torch.from_numpy(mean_x), torch.from_numpy(std_x), torch.from_numpy(offline_y), torch.from_numpy(mean_y), torch.from_numpy(std_y)
+    return torch.from_numpy(offline_x), torch.from_numpy(mean_x), torch.from_numpy(std_x), torch.from_numpy(offline_y), torch.from_numpy(mean_y), torch.from_numpy(std_y), num_samples
 
 
 def CPU_singleGPU_launcher(config):
@@ -109,7 +112,7 @@ def trainer(config):
     runner = get_runner(config.runner, config)
     return runner.train()
 def tester(config, task):
-    global offline_x_list, mean_x_list, std_x_list, offline_y_list, mean_y_list, std_y_list 
+    global offline_x_list, mean_x_list, std_x_list, offline_y_list, mean_y_list, std_y_list, num_samples
     offline_x = offline_x_list[config.args.seed] 
     offline_y = offline_y_list[config.args.seed]
     mean_x = mean_x_list[config.args.seed] 
@@ -119,6 +122,7 @@ def tester(config, task):
     
     set_random_seed(config.args.seed)
     runner = get_runner(config.runner, config)
+    runner.num_samples = num_samples
     runner.offline_x, runner.mean_offline_x, runner.std_offline_x = offline_x, mean_x, std_x 
     runner.offline_y, runner.mean_offline_y, runner.std_offline_y = offline_y, mean_y, std_y 
     
@@ -142,8 +146,8 @@ def main():
     for seed in seed_list:
         nconfig.args.train = True 
         nconfig.args.seed = seed 
-        model_load_path = f'results/few_shot/tune_2/{nconfig.task.name}/sampling_lr0.001/initial_lengthscale1.0/delta0.25/seed{seed}/BrownianBridge/checkpoint/top_model_epoch_100.pth'
-        optim_sche_load_path = f'results/few_shot/tune_2/{nconfig.task.name}/sampling_lr0.001/initial_lengthscale1.0/delta0.25/seed{seed}/BrownianBridge/checkpoint/top_optim_sche_epoch_100.pth'
+        model_load_path = f'results/few_shot/tune_2/{nconfig.task.name}/sampling_lr{nconfig.GP.sampling_from_GP_lr}/initial_lengthscale{nconfig.GP.initial_lengthscale}/delta0.25/seed{seed}/BrownianBridge/checkpoint/top_model_epoch_100.pth'
+        optim_sche_load_path = f'results/few_shot/tune_2/{nconfig.task.name}/sampling_lr{nconfig.GP.sampling_from_GP_lr}/initial_lengthscale{nconfig.GP.initial_lengthscale}/delta0.25/seed{seed}/BrownianBridge/checkpoint/top_optim_sche_epoch_100.pth'
         model_load_path_list.append(model_load_path) 
         optim_sche_load_path_list.append(optim_sche_load_path)
     
@@ -155,12 +159,12 @@ def main():
     if task.is_discrete: 
         task.map_to_logits()
         
-    global offline_x_list, mean_x_list, std_x_list, offline_y_list, mean_y_list, std_y_list 
+    global offline_x_list, mean_x_list, std_x_list, offline_y_list, mean_y_list, std_y_list, num_samples
     offline_x_list, mean_x_list, std_x_list, offline_y_list, mean_y_list, std_y_list = [],[],[],[],[],[] 
     for seed in seed_list : 
         global offline_x, mean_x, std_x, offline_y, mean_y, std_y 
         set_random_seed(seed)
-        offline_x, mean_x, std_x , offline_y, mean_y , std_y = get_offline_data(nconfig)
+        offline_x, mean_x, std_x , offline_y, mean_y , std_y, num_samples = get_offline_data(nconfig)
         offline_x = (offline_x - mean_x) / std_x
         offline_y = (offline_y - mean_y) / std_y   
         # shuffle_idx = np.random.permutation(offline_x.shape[0])
