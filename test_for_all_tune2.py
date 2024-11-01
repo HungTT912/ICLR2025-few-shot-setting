@@ -190,15 +190,18 @@ def main():
     
     
     df = pd.read_csv(file_path) 
-    tested_params = df[['eta','alpha','classifier_free_guidance_weight']].to_numpy()
+    tested_params = df[['eta','alpha','classifier_free_guidance_weight']].values.tolist()
+    print(tested_params)
     for eta in [0.2, 0.25, 0.5, 0.0, 0.05, 0.1, 0.15]: 
         for w in [-2.0, -1.5, -1, -0.5, 0, 0.5, 1, 1.5, 2 , 2.5 , 3, 4]:  
             for alpha in [0.8]: 
                 results_100th = []
                 results_80th = [] 
                 results_50th = []
+                
                 if [eta, alpha, w] in tested_params: 
                     continue 
+                # print([eta,alpha,w])
                 for seed in seed_list: 
                     nconfig.model.BB.params.eta = eta 
                     nconfig.testing.classifier_free_guidance_weight = w 
@@ -234,7 +237,6 @@ def main():
                     table = wandb.Table(dataframe=df)
                     wandb.log({"data_table": table})
     
-    nconfig.args.train = False 
     wandb.finish() 
     
 if __name__ == "__main__":
