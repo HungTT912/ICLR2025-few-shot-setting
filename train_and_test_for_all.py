@@ -86,9 +86,9 @@ def tester(config,task):
 
 def main():
     nconfig, dconfig = parse_args_and_config()
-    # wandb.init(project='BBDM-fewshot-setting',
-    #         name=nconfig.wandb_name,
-    #         config = dconfig) 
+    wandb.init(project='BBDM-fewshot-setting',
+            name=nconfig.wandb_name,
+            config = dconfig) 
     args = nconfig.args
     gpu_ids = args.gpu_ids
     if gpu_ids == "-1": # Use CPU
@@ -105,7 +105,8 @@ def main():
         model_load_path, optim_sche_load_path = trainer(nconfig)
         model_load_path_list.append(model_load_path) 
         optim_sche_load_path_list.append(optim_sche_load_path)
-    
+    if nconfig.task.name == 'DKittyMorphology-Exact-v0':
+        return 
     if nconfig.task.name != 'TFBind10-Exact-v0':
         task = design_bench.make(nconfig.task.name)
     else:
@@ -113,14 +114,15 @@ def main():
                                 dataset_kwargs={"max_samples": 10000})
     if task.is_discrete: 
         task.map_to_logits()
-    file_path = f'./few-shot-results/tuning_2_result_{nconfig.task.name}_test_{nconfig.testing.type_sampling}.csv'
+    file_path = f'./few-shot-results/tuning_3_result_{nconfig.task.name}_test_{nconfig.testing.type_sampling}_l{nconfig.GP.initial_lengthscale}.csv'
 
     if not os.path.isfile(file_path):
         with open(file_path, 'a') as file:
-            header = ['eta','alpha','classifier_free_guidance_weight', 'mean (100th)', 'std (100th)', 'mean (80th)', 'std (80th)', 'mean (50th)', 'std (50th)']
+            header = ['lengthscale','eta','alpha','classifier_free_guidance_weight', 'mean (100th)', 'std (100th)', 'mean (80th)', 'std (80th)', 'mean (50th)', 'std (50th)']
             writer = csv.writer(file)
             writer.writerow(header)
     df = pd.read_csv(file_path) 
+    lengthscale = nconfig.GP.initial_lengthscale
     tested_params = df[['eta','alpha','classifier_free_guidance_weight']].to_numpy()
     for eta in [0.0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.5]: 
         for w in [-1.5, -1, -0.5, 0, 0.5, 1, 1.5, 2 , 2.5 , 3, 4]:  
@@ -158,7 +160,7 @@ def main():
                 print(mean_score_80th, std_score_80th)
                 print(mean_score_50th, std_score_50th)
                 with open(file_path, 'a') as file:
-                    new_row = [eta, alpha, w, mean_score_100th, std_score_100th, mean_score_80th, std_score_80th, mean_score_50th, std_score_50th]
+                    new_row = [lengthscale,eta, alpha, w, mean_score_100th, std_score_100th, mean_score_80th, std_score_80th, mean_score_50th, std_score_50th]
                     writer = csv.writer(file)
                     writer.writerow(new_row)
                     df = pd.read_csv(file_path)
