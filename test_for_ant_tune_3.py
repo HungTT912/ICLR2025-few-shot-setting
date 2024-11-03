@@ -146,8 +146,8 @@ def main():
     for seed in seed_list:
         nconfig.args.train = True 
         nconfig.args.seed = seed 
-        model_load_path = f'results/few_shot/tune_3/{nconfig.task.name}/sampling_lr{nconfig.GP.sampling_from_GP_lr}/initial_lengthscale{nconfig.GP.initial_lengthscale}/delta0.25/seed{seed}/BrownianBridge/checkpoint/top_model_epoch_100.pth'
-        optim_sche_load_path = f'results/few_shot/tune_3/{nconfig.task.name}/sampling_lr{nconfig.GP.sampling_from_GP_lr}/initial_lengthscale{nconfig.GP.initial_lengthscale}/delta0.25/seed{seed}/BrownianBridge/checkpoint/top_optim_sche_epoch_100.pth'
+        model_load_path = f'results/few_shot/tune_3/{nconfig.task.name}/sampling_lr{nconfig.GP.sampling_from_GP_lr}/initial_lengthscale{nconfig.GP.initial_lengthscale}/delta{nconfig.GP.delta_lengthscale}/seed{seed}/BrownianBridge/checkpoint/top_model_epoch_100.pth'
+        optim_sche_load_path = f'results/few_shot/tune_3/{nconfig.task.name}/sampling_lr{nconfig.GP.sampling_from_GP_lr}/initial_lengthscale{nconfig.GP.initial_lengthscale}/delta{nconfig.GP.delta_variance}/seed{seed}/BrownianBridge/checkpoint/top_optim_sche_epoch_100.pth'
         model_load_path_list.append(model_load_path) 
         optim_sche_load_path_list.append(optim_sche_load_path)
     
@@ -183,11 +183,11 @@ def main():
         mean_y_list.append(mean_y)
         std_y_list.append(std_y) 
         
-    file_path = f'./few-shot-results/tuning_3_result_{nconfig.task.name}_test_{nconfig.testing.type_sampling}_l{nconfig.GP.initial_lengthscale}.csv'
+    file_path = f'./few-shot-results/tuning_3_result_{nconfig.task.name}_test_{nconfig.testing.type_sampling}_l{nconfig.GP.initial_lengthscale}_d{nconfig.GP.delta_lengthscale}.csv'
 
     if not os.path.isfile(file_path):
         with open(file_path, 'a') as file:
-            header = ['lengthscale','eta','alpha','classifier_free_guidance_weight', 'mean (100th)', 'std (100th)', 'mean (80th)', 'std (80th)', 'mean (50th)', 'std (50th)']
+            header = ['lengthscale','delta','eta','alpha','classifier_free_guidance_weight', 'mean (100th)', 'std (100th)', 'mean (80th)', 'std (80th)', 'mean (50th)', 'std (50th)']
             writer = csv.writer(file)
             writer.writerow(header)
     
@@ -197,6 +197,7 @@ def main():
     tested_params = df[['eta','alpha','classifier_free_guidance_weight']].values.tolist()
     print(tested_params)
     lengthscale = nconfig.GP.initial_lengthscale 
+    delta = nconfig.GP.delta_lengthscale 
     for eta in [0.2, 0.25, 0.5, 0.0, 0.05, 0.1, 0.15]: 
         for w in [-2.0, -1.5, -1, -0.5, 0, 0.5, 1, 1.5, 2 , 2.5 , 3, 4]:  
             for alpha in [0.8]: 
@@ -235,7 +236,7 @@ def main():
                 print(mean_score_80th, std_score_80th)
                 print(mean_score_50th, std_score_50th)
                 with open(file_path, 'a') as file:
-                    new_row = [lengthscale,eta, alpha, w, mean_score_100th, std_score_100th, mean_score_80th, std_score_80th, mean_score_50th, std_score_50th]
+                    new_row = [lengthscale,delta, eta, alpha, w, mean_score_100th, std_score_100th, mean_score_80th, std_score_80th, mean_score_50th, std_score_50th]
                     writer = csv.writer(file)
                     writer.writerow(new_row)
                     df = pd.read_csv(file_path)

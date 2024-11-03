@@ -1,8 +1,8 @@
 import yaml
 import os
 
-# Base configuration template for DKittyMorphology
-base_config_dkitty = {
+# Base configuration template
+base_config = {
     "base_GP": {
         "delta_lengthscale": 2.5,
         "delta_variance": 4.5,
@@ -16,7 +16,7 @@ base_config_dkitty = {
         "initial_lengthscale": None,  # Placeholder for varying values
         "initial_outputscale": None,  # Placeholder for matching initial_lengthscale
         "noise": 0.01,
-        "num_fit_samples": 10000,
+        "num_fit_samples": 10004,
         "num_functions": 8,
         "num_gradient_steps": 100,
         "num_points": 1024,
@@ -81,7 +81,10 @@ base_config_dkitty = {
         "clip_denoised": False,
         "num_candidates": 128,
         "percentile_sampling": 0.2,
-        "type_sampling": "random"
+        "type_sampling": "random",
+        "eta": 0,
+        "classifier_free_guidance_weight": -1,
+        "alpha": 0.95
     },
     "training": {
         "accumulate_grad_batches": 2,
@@ -99,23 +102,27 @@ base_config_dkitty = {
 
 # Directory to save configurations
 output_dir = "./configs/few-shot-setting/tune_3"
-os.makedirs(output_dir, exist_ok=True)
+# os.makedirs(output_dir, exist_ok=True)
 
 # Values for initial_lengthscale and initial_outputscale
-lengthscales = [2.0, 3.0, 4.0, 5.0]
+lengthscales = [5.0,6.0]
+delta_lengthscales = [0.25, 0.5, 1.0, 2.0]
 
 # Generate a YAML file for each initial_lengthscale and initial_outputscale pair
-for lengthscale in lengthscales:
-    # Update config with current lengthscale and outputscale values
-    config = base_config_dkitty.copy()
-    config["GP"]["initial_lengthscale"] = lengthscale
-    config["GP"]["initial_outputscale"] = lengthscale
-    config["wandb_name"] = f"few-shot-setting-dkitty-rand-l{lengthscale}"
+for delta in delta_lengthscales: 
+    for lengthscale in lengthscales:
+        # Update config with current lengthscale and outputscale values
+        config = base_config.copy()
+        config["GP"]["initial_lengthscale"] = lengthscale
+        config["GP"]["initial_outputscale"] = lengthscale
+        config["GP"]["delta_lengthscale"] = delta 
+        config["GP"]["delta_variance"] = delta 
+        config["wandb_name"] = f"few-shot-setting-dkitty-rand-l{lengthscale}-d{delta}"
 
-    # Save to a YAML file
-    filename = f"Template-BBDM-dkitty-l{lengthscale}.yaml"
-    filepath = os.path.join(output_dir, filename)
-    with open(filepath, 'w') as file:
-        yaml.dump(config, file)
+        # Save to a YAML file
+        filename = f"Template-BBDM-dkitty-l{lengthscale}-d{delta}.yaml"
+        filepath = os.path.join(output_dir, filename)
+        with open(filepath, 'w') as file:
+            yaml.dump(config, file)
 
-    print(f"Generated {filepath}")
+        print(f"Generated {filepath}")

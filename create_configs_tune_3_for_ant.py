@@ -105,20 +105,24 @@ output_dir = "./configs/few-shot-setting/tune_3"
 # os.makedirs(output_dir, exist_ok=True)
 
 # Values for initial_lengthscale and initial_outputscale
-lengthscales = [2.0, 3.0, 4.0, 5.0]
+lengthscales = [5.0,6.0]
+delta_lengthscales = [0.25, 0.5, 1.0, 2.0]
 
 # Generate a YAML file for each initial_lengthscale and initial_outputscale pair
-for lengthscale in lengthscales:
-    # Update config with current lengthscale and outputscale values
-    config = base_config.copy()
-    config["GP"]["initial_lengthscale"] = lengthscale
-    config["GP"]["initial_outputscale"] = lengthscale
-    config["wandb_name"] = f"few-shot-setting-ant-rand-l{lengthscale}"
+for delta in delta_lengthscales: 
+    for lengthscale in lengthscales:
+        # Update config with current lengthscale and outputscale values
+        config = base_config.copy()
+        config["GP"]["initial_lengthscale"] = lengthscale
+        config["GP"]["initial_outputscale"] = lengthscale
+        config["GP"]["delta_lengthscale"] = delta 
+        config["GP"]["delta_variance"] = delta 
+        config["wandb_name"] = f"few-shot-setting-ant-rand-l{lengthscale}-d{delta}"
 
-    # Save to a YAML file
-    filename = f"Template-BBDM-ant-l{lengthscale}.yaml"
-    filepath = os.path.join(output_dir, filename)
-    with open(filepath, 'w') as file:
-        yaml.dump(config, file)
+        # Save to a YAML file
+        filename = f"Template-BBDM-ant-l{lengthscale}-d{delta}.yaml"
+        filepath = os.path.join(output_dir, filename)
+        with open(filepath, 'w') as file:
+            yaml.dump(config, file)
 
-    print(f"Generated {filepath}")
+        print(f"Generated {filepath}")

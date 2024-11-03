@@ -105,8 +105,9 @@ def main():
         model_load_path, optim_sche_load_path = trainer(nconfig)
         model_load_path_list.append(model_load_path) 
         optim_sche_load_path_list.append(optim_sche_load_path)
-    if nconfig.task.name == 'DKittyMorphology-Exact-v0':
-        return 
+    # if nconfig.task.name == 'DKittyMorphology-Exact-v0':
+    #     return 
+    return 
     if nconfig.task.name != 'TFBind10-Exact-v0':
         task = design_bench.make(nconfig.task.name)
     else:
