@@ -113,7 +113,7 @@ def main():
                                 dataset_kwargs={"max_samples": 10000})
     if task.is_discrete: 
         task.map_to_logits()
-    file_path = f'./few-shot-results/tuning_4_result_{nconfig.task.name}_test_{nconfig.testing.type_sampling}_l{nconfig.GP.initial_lengthscale}.csv'
+    file_path = f'./few-shot-results/tuning_4_result_{nconfig.task.name}_test_{nconfig.testing.type_sampling}_l{nconfig.GP.initial_lengthscale}_dl{nconfig.GP.delta_lengthscale}_v{nconfig.GP.initial_outputscale}_dv{nconfig.GP.delta_variance}.csv'
 
     if not os.path.isfile(file_path):
         with open(file_path, 'a') as file:
