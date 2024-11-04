@@ -183,7 +183,7 @@ def main():
         mean_y_list.append(mean_y)
         std_y_list.append(std_y) 
         
-    file_path = f'./few-shot-results/tuning_4_result_{nconfig.task.name}_test_{nconfig.testing.type_sampling}_l{nconfig.GP.initial_lengthscale}_d{nconfig.GP.delta_lengthscale}.csv'
+    file_path = f'./few-shot-results/tuning_4_result_{nconfig.task.name}_test_{nconfig.testing.type_sampling}_l{nconfig.GP.initial_lengthscale}_d{nconfig.GP.delta_lengthscale}_v{nconfig.GP.initial_outputscale}_dv{nconfig.GP.delta_variance}.csv'
 
     if not os.path.isfile(file_path):
         with open(file_path, 'a') as file:
