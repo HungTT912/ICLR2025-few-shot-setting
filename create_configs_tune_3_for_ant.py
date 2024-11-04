@@ -96,33 +96,39 @@ base_config = {
         "validation_interval": 20
     },
     "data_ratio": 0.01,
-    "tune": "few_shot/tune_3",
+    "tune": "few_shot/tune_4",
     "wandb_name": None  # Placeholder for varying names
 }
 
 # Directory to save configurations
-output_dir = "./configs/few-shot-setting/tune_3"
-# os.makedirs(output_dir, exist_ok=True)
+output_dir = "./configs/few-shot-setting/tune_4"
+
+if os.path.exists(output_dir)==False:
+    os.makedirs(output_dir, exist_ok=True)
 
 # Values for initial_lengthscale and initial_outputscale
-lengthscales = [5.0,6.0]
-delta_lengthscales = [0.25, 0.5, 1.0, 2.0]
+lengthscales = [7.5]
+delta_lengthscales = [2.5, 1.5,0.5]
+variances  = [5.5] 
+delta_variances = [4.5, 3.5, 2.5 ] 
 
 # Generate a YAML file for each initial_lengthscale and initial_outputscale pair
-for delta in delta_lengthscales: 
+for delta_lengthscale in delta_lengthscales: 
     for lengthscale in lengthscales:
-        # Update config with current lengthscale and outputscale values
-        config = base_config.copy()
-        config["GP"]["initial_lengthscale"] = lengthscale
-        config["GP"]["initial_outputscale"] = lengthscale
-        config["GP"]["delta_lengthscale"] = delta 
-        config["GP"]["delta_variance"] = delta 
-        config["wandb_name"] = f"few-shot-setting-ant-rand-l{lengthscale}-d{delta}"
+        for variance in variances: 
+            for delta_variance in delta_variances: 
+                # Update config with current lengthscale and outputscale values
+                config = base_config.copy()
+                config["GP"]["initial_lengthscale"] = lengthscale
+                config["GP"]["initial_outputscale"] = variance
+                config["GP"]["delta_lengthscale"] = delta_lengthscale
+                config["GP"]["delta_variance"] = delta_variance 
+                config["wandb_name"] = f"few-shot-setting-ant-rand-l{lengthscale}-dl{delta_lengthscale}-v{variance}-dv{delta_variance}"
 
-        # Save to a YAML file
-        filename = f"Template-BBDM-ant-l{lengthscale}-d{delta}.yaml"
-        filepath = os.path.join(output_dir, filename)
-        with open(filepath, 'w') as file:
-            yaml.dump(config, file)
+                # Save to a YAML file
+                filename = f"Template-BBDM-ant-l{lengthscale}-dl{delta_lengthscale}-v{variance}-dv{delta_variance}.yaml"
+                filepath = os.path.join(output_dir, filename)
+                with open(filepath, 'w') as file:
+                    yaml.dump(config, file)
 
-        print(f"Generated {filepath}")
+                print(f"Generated {filepath}")

@@ -105,9 +105,7 @@ def main():
         model_load_path, optim_sche_load_path = trainer(nconfig)
         model_load_path_list.append(model_load_path) 
         optim_sche_load_path_list.append(optim_sche_load_path)
-    # if nconfig.task.name == 'DKittyMorphology-Exact-v0':
-    #     return 
-    return 
+    # return 
     if nconfig.task.name != 'TFBind10-Exact-v0':
         task = design_bench.make(nconfig.task.name)
     else:
@@ -115,7 +113,7 @@ def main():
                                 dataset_kwargs={"max_samples": 10000})
     if task.is_discrete: 
         task.map_to_logits()
-    file_path = f'./few-shot-results/tuning_3_result_{nconfig.task.name}_test_{nconfig.testing.type_sampling}_l{nconfig.GP.initial_lengthscale}.csv'
+    file_path = f'./few-shot-results/tuning_4_result_{nconfig.task.name}_test_{nconfig.testing.type_sampling}_l{nconfig.GP.initial_lengthscale}.csv'
 
     if not os.path.isfile(file_path):
         with open(file_path, 'a') as file:
@@ -125,9 +123,9 @@ def main():
     df = pd.read_csv(file_path) 
     lengthscale = nconfig.GP.initial_lengthscale
     tested_params = df[['eta','alpha','classifier_free_guidance_weight']].values.tolist()
-    for eta in [0.0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.5]: 
-        for w in [-1.5, -1, -0.5, 0, 0.5, 1, 1.5, 2 , 2.5 , 3, 4]:  
-            for alpha in [0.8]: 
+    for eta in [0.0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.5, 0.75, 1.0]: 
+        for w in [-2.0, -1.5, -1, -0.5, 0, 0.5, 1, 1.5, 2, 3, 4]:  
+            for alpha in [0.8,0.9, 0.95, 1.0]: 
                 results_100th = []
                 results_80th = [] 
                 results_50th = []
