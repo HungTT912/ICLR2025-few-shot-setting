@@ -366,20 +366,20 @@ class BaseRunner(ABC):
                                 variance=variance,
                                 noise = base_noise,
                                 mean_prior=mean_prior,
-                                delta_lengthscale=self.config.base_GP.delta_lengthscale,
-                                delta_variance=self.config.base_GP.delta_variance)
+                                delta_lengthscale=self.config.GP.delta_lengthscale,
+                                delta_variance=self.config.GP.delta_variance)
             base_gp_hyper = GP_hyper(device=self.config.training.device[0],
                                 lengthscale=base_lengthscale,
                                 variance=base_variance,
                                 noise = base_noise,
                                 mean_prior=mean_prior,
-                                delta_lengthscale=self.config.GP.delta_lengthscale,
-                                delta_variance=self.config.GP.delta_variance)
+                                delta_lengthscale=self.config.base_GP.delta_lengthscale,
+                                delta_variance=self.config.base_GP.delta_variance)
 
             val_loader = None
             val_dataset = []
-            
-          
+        
+        
             
             accumulate_grad_batches = self.config.training.accumulate_grad_batches 
             for epoch in range(start_epoch, self.config.training.n_epochs):

@@ -86,9 +86,9 @@ def tester(config,task):
 
 def main():
     nconfig, dconfig = parse_args_and_config()
-    wandb.init(project='BBDM-fewshot-setting',
-            name=nconfig.wandb_name,
-            config = dconfig) 
+    # wandb.init(project='BBDM-fewshot-setting',
+    #         name=nconfig.wandb_name,
+    #         config = dconfig) 
     args = nconfig.args
     gpu_ids = args.gpu_ids
     if gpu_ids == "-1": # Use CPU
@@ -113,7 +113,7 @@ def main():
                                 dataset_kwargs={"max_samples": 10000})
     if task.is_discrete: 
         task.map_to_logits()
-    file_path = f'./few-shot-results/tuning_4_result_{nconfig.task.name}_test_{nconfig.testing.type_sampling}_l{nconfig.GP.initial_lengthscale}_dl{nconfig.GP.delta_lengthscale}_v{nconfig.GP.initial_outputscale}_dv{nconfig.GP.delta_variance}.csv'
+    file_path = f'./few-shot-results/tuning_5_result_{nconfig.task.name}_test_{nconfig.testing.type_sampling}_l{nconfig.GP.initial_lengthscale}_dl{nconfig.GP.delta_lengthscale}_v{nconfig.GP.initial_outputscale}_dv{nconfig.GP.delta_variance}.csv'
 
     if not os.path.isfile(file_path):
         with open(file_path, 'a') as file:
