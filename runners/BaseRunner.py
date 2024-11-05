@@ -387,7 +387,8 @@ class BaseRunner(ABC):
                 start_time = time.time()
                 
                 data_from_GP = sampling_data_from_GP(config=self.config,
-                                                    x_train=self.best_x,
+                                                    x_train=self.offline_x,
+                                                    y_train= self.offline_y,
                                                     device=self.config.training.device[0],
                                                     gp_hyper=gp_hyper,
                                                     base_gp_hyper=base_gp_hyper,
