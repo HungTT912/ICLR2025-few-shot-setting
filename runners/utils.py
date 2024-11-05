@@ -172,7 +172,7 @@ def sampling_data_from_GP(config, x_train, y_train, device, num_gradient_steps, 
         # new_lengthscale = lengthscale*(1 + delta_lengthscale*(torch.rand(1, device=device)*2 -1))
         # new_variance = variance*(1 + delta_variance*(torch.rand(1, device=device)*2 -1))
         new_base_lengthscale = base_gp_hyper.lengthscale + base_gp_hyper.delta_lengthscale*(torch.rand(1, device=device)*2 -1)
-        new_base_variance = base_gp_hyper.variance + base_gp_hyper.base_GP.delta_variance*(torch.rand(1, device=device)*2 -1)
+        new_base_variance = base_gp_hyper.variance + base_gp_hyper.delta_variance*(torch.rand(1, device=device)*2 -1)
         base_GP_Model.set_hyper(lengthscale=new_base_lengthscale, variance=new_base_variance)
         y_train[num_samples+1:] = base_GP_Model.sampling_pseudo_label()
         best_indices = torch.argsort(y_train)[-1024:]

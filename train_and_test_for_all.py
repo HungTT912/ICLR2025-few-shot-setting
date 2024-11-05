@@ -7,8 +7,8 @@ import random
 import numpy as np
 import pandas as pd 
 import csv
-import wandb 
-wandb.login(key="1cfab558732ccb32d573a7276a337d22b7d8b371")
+# import wandb 
+# wandb.login(key="1cfab558732ccb32d573a7276a337d22b7d8b371")
 import design_bench
 
 from utils import dict2namespace, get_runner, namespace2dict
@@ -86,9 +86,9 @@ def tester(config,task):
 
 def main():
     nconfig, dconfig = parse_args_and_config()
-    wandb.init(project='BBDM-fewshot-setting',
-            name=nconfig.wandb_name,
-            config = dconfig) 
+    # wandb.init(project='BBDM-fewshot-setting',
+    #         name=nconfig.wandb_name,
+    #         config = dconfig) 
     args = nconfig.args
     gpu_ids = args.gpu_ids
     if gpu_ids == "-1": # Use CPU
@@ -113,7 +113,7 @@ def main():
                                 dataset_kwargs={"max_samples": 10000})
     if task.is_discrete: 
         task.map_to_logits()
-    file_path = f'./few-shot-results/tuning_4_result_{nconfig.task.name}_test_{nconfig.testing.type_sampling}_l{nconfig.GP.initial_lengthscale}_dl{nconfig.GP.delta_lengthscale}_v{nconfig.GP.initial_outputscale}_dv{nconfig.GP.delta_variance}.csv'
+    file_path = f'./few-shot-results/tuning_5_result_{nconfig.task.name}_test_{nconfig.testing.type_sampling}_l{nconfig.GP.initial_lengthscale}_dl{nconfig.GP.delta_lengthscale}_v{nconfig.GP.initial_outputscale}_dv{nconfig.GP.delta_variance}.csv'
 
     if not os.path.isfile(file_path):
         with open(file_path, 'a') as file:
@@ -163,11 +163,11 @@ def main():
                     writer = csv.writer(file)
                     writer.writerow(new_row)
                     df = pd.read_csv(file_path)
-                    table = wandb.Table(dataframe=df)
-                    wandb.log({"data_table": table})
+                    # table = wandb.Table(dataframe=df)
+                    # wandb.log({"data_table": table})
     
     nconfig.args.train = False 
-    wandb.finish() 
+    # wandb.finish() 
     
 if __name__ == "__main__":
     main()
