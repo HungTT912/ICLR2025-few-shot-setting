@@ -396,6 +396,7 @@ class BaseRunner(ABC):
                                                     num_functions=self.config.GP.num_functions,
                                                     num_points = self.config.GP.num_points,
                                                     num_gradient_steps=self.config.GP.num_gradient_steps,
+                                                    num_samples = self.num_samples,
                                                     seed=epoch,
                                                     threshold_diff=self.config.GP.threshold_diff)
                 train_loader, current_epoch_val_dataset = create_train_dataloader(data_from_GP=data_from_GP,
