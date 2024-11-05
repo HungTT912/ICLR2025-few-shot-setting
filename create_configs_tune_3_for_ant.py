@@ -96,12 +96,12 @@ base_config = {
         "validation_interval": 20
     },
     "data_ratio": 0.01,
-    "tune": "few_shot/tune_4",
+    "tune": "few_shot/tune_5",
     "wandb_name": None  # Placeholder for varying names
 }
 
 # Directory to save configurations
-output_dir = "./configs/few-shot-setting/tune_4"
+output_dir = "./configs/few-shot-setting/tune_5"
 
 if os.path.exists(output_dir)==False:
     os.makedirs(output_dir, exist_ok=True)

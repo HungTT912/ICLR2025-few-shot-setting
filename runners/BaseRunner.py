@@ -361,60 +361,38 @@ class BaseRunner(ABC):
             
             device = self.config.training.device[0]
             
-            
-
-            val_loader = None
-            val_dataset = []
-            
-            base_GP_Model = GP(device=self.config.training.device[0],
-                                x_train=self.offline_x[self.num_samples+1:],
-                                y_train=self.offline_y[self.num_samples+1:],
+            gp_hyper = GP_hyper(device=self.config.training.device[0],
+                                lengthscale=lengthscale,
+                                variance=variance,
+                                noise = base_noise,
+                                mean_prior=mean_prior,
+                                delta_lengthscale=self.config.GP.delta_lengthscale,
+                                delta_variance=self.config.GP.delta_variance)
+            base_gp_hyper = GP_hyper(device=self.config.training.device[0],
                                 lengthscale=base_lengthscale,
                                 variance=base_variance,
                                 noise = base_noise,
                                 mean_prior=mean_prior)
+
+            val_loader = None
+            val_dataset = []
+            
+          
             
             accumulate_grad_batches = self.config.training.accumulate_grad_batches 
             for epoch in range(start_epoch, self.config.training.n_epochs):
                 ### generate data from GP and create dataloader
                 start_time = time.time()
                 
-                new_base_lengthscale = base_lengthscale + self.config.base_GP.delta_lengthscale*(torch.rand(1, device=device)*2 -1)
-                new_base_variance = base_variance + self.config.base_GP.delta_variance*(torch.rand(1, device=device)*2 -1)
-                
-                base_GP_Model.set_hyper(lengthscale=new_base_lengthscale, variance=new_base_variance)
-                
-                self.offline_y[self.num_samples+1:] = base_GP_Model.sampling_pseudo_label()
-                best_indices = torch.argsort(self.offline_y)[-1024:]
-                self.best_x = self.offline_x[best_indices]
-                
-                
-                if self.config.task.name == 'TFBind8-Exact-v0': 
-                    selected_fit_samples = torch.randperm(self.offline_x.shape[0])[:self.config.GP.num_fit_samples]
-                    GP_Model = GP(device=self.config.training.device[0],
-                                x_train=self.offline_x[selected_fit_samples],
-                                y_train=self.offline_y[selected_fit_samples], 
-                                lengthscale=lengthscale, 
-                                variance=variance, 
-                                noise=noise, 
-                                mean_prior=mean_prior)
-                else: 
-                    GP_Model = GP(device=self.config.training.device[0],
-                                x_train=self.offline_x,
-                                y_train=self.offline_y, 
-                                lengthscale=lengthscale, 
-                                variance=variance, 
-                                noise=noise, 
-                                mean_prior=mean_prior)
-                data_from_GP = sampling_data_from_GP(x_train=self.best_x,
+                data_from_GP = sampling_data_from_GP(config=self.config,
+                                                    x_train=self.best_x,
                                                     device=self.config.training.device[0],
-                                                    GP_Model=GP_Model,
-                                                    num_functions=self.config.GP.num_functions,
-                                                    num_gradient_steps=self.config.GP.num_gradient_steps,
-                                                    num_points=self.config.GP.num_points,
+                                                    gp_hyper=gp_hyper,
+                                                    base_gp_hyper=base_gp_hyper,
                                                     learning_rate=self.config.GP.sampling_from_GP_lr,
-                                                    delta_lengthscale=self.config.GP.delta_lengthscale,
-                                                    delta_variance=self.config.GP.delta_variance,
+                                                    num_functions=self.config.GP.num_functions,
+                                                    num_points = self.config.GP.num_points,
+                                                    num_gradient_steps=self.config.GP.num_gradient_steps,
                                                     seed=epoch,
                                                     threshold_diff=self.config.GP.threshold_diff)
                 train_loader, current_epoch_val_dataset = create_train_dataloader(data_from_GP=data_from_GP,
