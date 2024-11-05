@@ -7,8 +7,8 @@ import random
 import numpy as np
 import pandas as pd 
 import csv
-import wandb 
-wandb.login(key="1cfab558732ccb32d573a7276a337d22b7d8b371")
+# import wandb 
+# wandb.login(key="1cfab558732ccb32d573a7276a337d22b7d8b371")
 import design_bench
 
 from utils import dict2namespace, get_runner, namespace2dict
@@ -163,11 +163,11 @@ def main():
                     writer = csv.writer(file)
                     writer.writerow(new_row)
                     df = pd.read_csv(file_path)
-                    table = wandb.Table(dataframe=df)
-                    wandb.log({"data_table": table})
+                    # table = wandb.Table(dataframe=df)
+                    # wandb.log({"data_table": table})
     
     nconfig.args.train = False 
-    wandb.finish() 
+    # wandb.finish() 
     
 if __name__ == "__main__":
     main()
