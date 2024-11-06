@@ -102,7 +102,9 @@ def main():
     for seed in seed_list:
         nconfig.args.train = True 
         nconfig.args.seed = seed 
-        model_load_path, optim_sche_load_path = trainer(nconfig)
+        # model_load_path, optim_sche_load_path = trainer(nconfig)
+        model_load_path = f'results/few_shot/tune_5/{nconfig.task.name}/sampling_lr{nconfig.GP.sampling_from_GP_lr}/initial_lengthscale{nconfig.GP.initial_lengthscale}/delta_lengthscale{nconfig.GP.delta_lengthscale}/initial_outputscale{nconfig.GP.initial_outputscale}/delta_variance{nconfig.GP.delta_variance}/seed{seed}/BrownianBridge/checkpoint/top_model_epoch_100.pth'
+        optim_sche_load_path = f'results/few_shot/tune_5/{nconfig.task.name}/sampling_lr{nconfig.GP.sampling_from_GP_lr}/initial_lengthscale{nconfig.GP.initial_lengthscale}/delta_lengthscale{nconfig.GP.delta_lengthscale}/initial_outputscale{nconfig.GP.initial_outputscale}/delta_variance{nconfig.GP.delta_variance}/seed{seed}/BrownianBridge/checkpoint/top_optim_sche_epoch_100.pth'
         model_load_path_list.append(model_load_path) 
         optim_sche_load_path_list.append(optim_sche_load_path)
     # return 
