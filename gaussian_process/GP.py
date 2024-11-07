@@ -10,7 +10,7 @@ kernel_dict = {'rbf': RBFKernel,'matern': MaternKernel,
                 'rq' : RQKernel, 'period': PeriodicKernel, 'cosine': CosineKernel,
                 'poly': PolynomialKernel}
 class GP_hyper: 
-    def __init__(self, device, lengthscale, variance,noise, mean_prior, delta_lengthscale, delta_variance): 
+    def __init__(self, device, lengthscale, variance,noise, mean_prior, delta_lengthscale=0, delta_variance=0): 
         self.device = device 
         self.lengthscale = lengthscale 
         self.variance = variance 

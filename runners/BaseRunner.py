@@ -349,9 +349,9 @@ class BaseRunner(ABC):
 
         try:
             # initialize params for GP
-            lengthscale = torch.tensor(self.config.GP.initial_lengthscale, device=self.config.training.device[0])
-            variance = torch.tensor(self.config.GP.initial_outputscale, device=self.config.training.device[0])
-            noise = torch.tensor(self.config.GP.noise, device=self.config.training.device[0])
+            lengthscale = torch.tensor(self.config.base_GP.initial_lengthscale, device=self.config.training.device[0])
+            variance = torch.tensor(self.config.base_GP.initial_outputscale, device=self.config.training.device[0])
+            noise = torch.tensor(self.config.base_GP.noise, device=self.config.training.device[0])
             mean_prior = torch.tensor(0.0, device = self.config.training.device[0]) 
             
             #GP_Model.set_hyper(lengthscale=lengthscale,variance=variance)
@@ -389,8 +389,8 @@ class BaseRunner(ABC):
                                                     num_gradient_steps=self.config.GP.num_gradient_steps,
                                                     num_points=self.config.GP.num_points,
                                                     learning_rate=self.config.GP.sampling_from_GP_lr,
-                                                    delta_lengthscale=self.config.GP.delta_lengthscale,
-                                                    delta_variance=self.config.GP.delta_variance,
+                                                    delta_lengthscale=self.config.base_GP.delta_lengthscale,
+                                                    delta_variance=self.config.base_GP.delta_variance,
                                                     seed=epoch,
                                                     threshold_diff=self.config.GP.threshold_diff)
                 train_loader, current_epoch_val_dataset = create_train_dataloader(data_from_GP=data_from_GP,
