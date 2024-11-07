@@ -125,9 +125,9 @@ def main():
     df = pd.read_csv(file_path) 
     lengthscale = nconfig.GP.initial_lengthscale
     tested_params = df[['eta','alpha','classifier_free_guidance_weight']].values.tolist()
-    for eta in [0.0, 0.1, 0.2, 0.5, 0.75, 1.0]: 
-        for w in [-2.0, -1.5, -1, 0, 2, 4]:  
-            for alpha in [0.8,0.95]: 
+    for eta in [0.1]: 
+        for w in [-1.0]:  
+            for alpha in [0.95]: 
                 results_100th = []
                 results_80th = [] 
                 results_50th = []
