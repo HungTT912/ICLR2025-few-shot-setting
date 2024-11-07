@@ -118,7 +118,7 @@ class BaseRunner(ABC):
         offline_y = offline_y.reshape(-1)
         # unlabel 99% of the offline data 
         self.num_samples =  int(self.config.data_ratio*offline_y.shape[0])
-        offline_y[self.num_samples+1:]  = -1
+        #offline_y[self.num_samples+1:]  = -1
         
         return torch.from_numpy(offline_x), torch.from_numpy(mean_x), torch.from_numpy(std_x), torch.from_numpy(offline_y), torch.from_numpy(mean_y), torch.from_numpy(std_y)
 
