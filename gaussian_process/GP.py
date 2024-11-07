@@ -10,14 +10,12 @@ kernel_dict = {'rbf': RBFKernel,'matern': MaternKernel,
                 'rq' : RQKernel, 'period': PeriodicKernel, 'cosine': CosineKernel,
                 'poly': PolynomialKernel}
 class GP_hyper: 
-    def __init__(self, device, lengthscale, variance,noise, mean_prior, delta_lengthscale=0, delta_variance=0): 
+    def __init__(self, device, lengthscale, variance,noise, mean_prior): 
         self.device = device 
         self.lengthscale = lengthscale 
         self.variance = variance 
         self.noise = noise 
         self.mean_prior = mean_prior 
-        self.delta_lengthscale = delta_lengthscale
-        self.delta_variance = delta_variance
 class GP: 
     def __init__(self,device, x_train, y_train, lengthscale, variance, noise, mean_prior, kernel='rbf'):
         

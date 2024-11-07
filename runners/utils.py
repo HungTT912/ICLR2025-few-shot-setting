@@ -202,7 +202,7 @@ def sampling_data_from_GP(x_train, y_train, num_samples, device, base_gp_hyper, 
         base_GP_Model.set_hyper(lengthscale=new_lengthscale, variance=new_variance)
         y_pred = base_GP_Model.sampling_pseudo_label()
         y_train[num_samples+1:] = y_pred
-        # selected_fit_idx = torch.randperm(x_train.shape[0])[:num_fit_samples]
+        
         GP_Model = GP(device=device,
                     x_train=x_train,
                     y_train=y_train,
