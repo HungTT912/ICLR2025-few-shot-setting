@@ -72,5 +72,5 @@ training:
   val_frac: 0.1
   validation_interval: 20
 data_ratio : 0.01
-tune: few_shot
+tune: few_shot/tune_6
 wandb_name: few-shot-setting-ant-rand
