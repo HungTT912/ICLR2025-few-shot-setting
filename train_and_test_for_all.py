@@ -125,8 +125,8 @@ def main():
     df = pd.read_csv(file_path) 
     lengthscale = nconfig.GP.initial_lengthscale
     tested_params = df[['eta','alpha','classifier_free_guidance_weight']].values.tolist()
-    for eta in [0.1,0.0,0.05,0.2]: 
-        for w in [-1.0,-1.5]:  
+    for eta in [0.1,0.0,0.2]: 
+        for w in [-1.0,-1.5, 1.0,2.5]:  
             for alpha in [0.95,0.9,0.8]: 
                 results_100th = []
                 results_80th = [] 
@@ -157,6 +157,7 @@ def main():
                 mean_score_50th = np_result_50th.mean() 
                 std_score_50th = np_result_50th.std()
                 print(nconfig.task.name)
+                print([eta,alpha,w])
                 print(mean_score_100th, std_score_100th)
                 print(mean_score_80th, std_score_80th)
                 print(mean_score_50th, std_score_50th)
