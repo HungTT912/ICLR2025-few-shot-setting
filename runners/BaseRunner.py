@@ -379,7 +379,8 @@ class BaseRunner(ABC):
                                 variance=variance, 
                                 noise=noise, 
                                 mean_prior=mean_prior)
-                data_from_GP = sampling_data_from_GP(x_train=self.offline_x,
+                data_from_GP = sampling_data_from_GP(config= self.config,
+                                                    x_train=self.offline_x,
                                                     y_train=self.offline_y,
                                                     num_samples = self.num_samples,
                                                     device=self.config.training.device[0],
