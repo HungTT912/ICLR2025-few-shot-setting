@@ -564,19 +564,28 @@ class BaseRunner(ABC):
         #                                                         percentile_sampling=self.config.testing.percentile_sampling,
         #                                                         seed=self.config.args.seed)
         # unlabeled_x = self.offline_x[self.num_samples+1:] 
-        normdist = torch.distributions.Normal(0,1)
-        selected_unlabel = torch.randperm(self.offline_x.shape[0]-self.num_samples)[:128-self.num_samples]+ self.num_samples
-        x_unlabel = self.offline_x[selected_unlabel] 
-        # y_unlabel = torch.full((x_unlabel.shape[0],),0.0).to(device) 
-        if self.config.testing.type_sampling == 'random':
-            y_mean = torch.mean(self.offline_y[:self.num_samples]) 
-            noise = normdist.sample((self.config.testing.num_candidates-self.num_samples,))
-            pseudo_label = torch.full((self.config.testing.num_candidates-self.num_samples,),y_mean) + noise 
-            low_scores = torch.concat([self.offline_y[:self.num_samples],pseudo_label.to(device)])
-            low_candidates = torch.concat([self.offline_x[:self.num_samples],x_unlabel.to(device)]) 
-            
+        if self.config.testing_num_candidates > self.num_samples:
+            normdist = torch.distributions.Normal(0,1)
+            selected_unlabel = torch.randperm(self.offline_x.shape[0]-self.num_samples)[:128-self.num_samples]+ self.num_samples
+            x_unlabel = self.offline_x[selected_unlabel] 
+            # y_unlabel = torch.full((x_unlabel.shape[0],),0.0).to(device) 
+            if self.config.testing.type_sampling == 'random':
+                y_mean = torch.mean(self.offline_y[:self.num_samples]) 
+                noise = normdist.sample((self.config.testing.num_candidates-self.num_samples,))
+                pseudo_label = torch.full((self.config.testing.num_candidates-self.num_samples,),y_mean) + noise 
+                low_scores = torch.concat([self.offline_y[:self.num_samples],pseudo_label.to(device)])
+                low_candidates = torch.concat([self.offline_x[:self.num_samples],x_unlabel.to(device)]) 
+                
+            else: 
+                raise NotImplementedError('Please implement it')
         else: 
-            raise NotImplementedError('Please implement it')
+            low_candidates, low_scores = sampling_from_offline_data(x=self.offline_x,
+                                                                y=self.offline_y,
+                                                                n_candidates=self.config.testing.num_candidates, 
+                                                                type=self.config.testing.type_sampling,
+                                                                percentile_sampling=self.config.testing.percentile_sampling,
+                                                                seed=self.config.args.seed)
+            
         # import pdb ; pdb.set_trace()
         if self.use_ema:
             self.apply_ema()
