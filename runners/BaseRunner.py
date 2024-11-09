@@ -579,8 +579,8 @@ class BaseRunner(ABC):
             else: 
                 raise NotImplementedError('Please implement it')
         else: 
-            low_candidates, low_scores = sampling_from_offline_data(x=self.offline_x,
-                                                                y=self.offline_y,
+            low_candidates, low_scores = sampling_from_offline_data(x=self.offline_x[:self.num_samples],
+                                                                y=self.offline_y[:self.num_samples],
                                                                 n_candidates=self.config.testing.num_candidates, 
                                                                 type=self.config.testing.type_sampling,
                                                                 percentile_sampling=self.config.testing.percentile_sampling,
