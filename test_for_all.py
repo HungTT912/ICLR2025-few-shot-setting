@@ -102,9 +102,9 @@ def main():
     for seed in seed_list:
         nconfig.args.train = True 
         nconfig.args.seed = seed 
-        model_load_path, optim_sche_load_path = trainer(nconfig)
-        # model_load_path = f'results/few_shot/tune_5/{nconfig.task.name}/sampling_lr{nconfig.GP.sampling_from_GP_lr}/initial_lengthscale{nconfig.GP.initial_lengthscale}/delta_lengthscale{nconfig.GP.delta_lengthscale}/initial_outputscale{nconfig.GP.initial_outputscale}/delta_variance{nconfig.GP.delta_variance}/seed{seed}/BrownianBridge/checkpoint/top_model_epoch_100.pth'
-        # optim_sche_load_path = f'results/few_shot/tune_5/{nconfig.task.name}/sampling_lr{nconfig.GP.sampling_from_GP_lr}/initial_lengthscale{nconfig.GP.initial_lengthscale}/delta_lengthscale{nconfig.GP.delta_lengthscale}/initial_outputscale{nconfig.GP.initial_outputscale}/delta_variance{nconfig.GP.delta_variance}/seed{seed}/BrownianBridge/checkpoint/top_optim_sche_epoch_100.pth'
+        # model_load_path, optim_sche_load_path = trainer(nconfig)
+        model_load_path = f'results/few_shot/tune_6/type_2/{nconfig.task.name}/sampling_lr{nconfig.GP.sampling_from_GP_lr}/initial_lengthscale{nconfig.GP.initial_lengthscale}/delta{nconfig.GP.delta_lengthscale}/seed{seed}/BrownianBridge/checkpoint/top_model_epoch_100.pth'
+        optim_sche_load_path = f'results/few_shot/tune_6/type_2/{nconfig.task.name}/sampling_lr{nconfig.GP.sampling_from_GP_lr}/initial_lengthscale{nconfig.GP.initial_lengthscale}/delta{nconfig.GP.delta_lengthscale}/seed{seed}/BrownianBridge/checkpoint/top_optim_sche_epoch_100.pth'
         model_load_path_list.append(model_load_path) 
         optim_sche_load_path_list.append(optim_sche_load_path)
     # return 
@@ -125,7 +125,7 @@ def main():
     df = pd.read_csv(file_path) 
     lengthscale = nconfig.GP.initial_lengthscale
     tested_params = df[['eta','alpha','classifier_free_guidance_weight']].values.tolist()
-    for eta in [0.1,0.0, 0.2, 0.3, 0.4, 0.5, 0.75, 1.0]: 
+    for eta in [0.1,0.0,0.2, 0.3, 0.4, 0.5, 0.75, 1.0]: 
         for w in [-1.0, -1.5, 0.0, 1.0, 2.5]:  
             for alpha in [0.95,0.9,0.8]: 
                 results_100th = []
